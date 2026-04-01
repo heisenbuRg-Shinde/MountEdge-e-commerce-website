@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Orders | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .order-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--glass-border);
+        }
+        .badge {
+            padding: 0.2rem 0.8rem;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container animate-fade">
+        <h2 style="margin-bottom: 2rem;">Order History</h2>
+        <div id="orders-list">
+            <!-- Loaded via JS -->
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        if (!auth.isAuthenticated()) window.location.href = '/login.html';
+
+        async function loadOrders() {
+            try {
+                const orders = await api.get('/orders');
+                const container = document.getElementById('orders-list');
+                
+                if (orders.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No orders found.</p>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => `
+                    <div class="order-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 1rem;">
+                            <span style="color: var(--text-muted)">Order #${o.orderId}</span>
+                            <span class="badge badge-success">${o.status}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>$${o.totalAmount.toFixed(2)}</h3>
+                            <span style="color: var(--text-muted)">Date: ${new Date(o.createdAt).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>

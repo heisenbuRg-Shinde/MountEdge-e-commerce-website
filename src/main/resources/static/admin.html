@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav><ul><li><a href="/">Home</a></li></ul></nav>
+    </header>
+
+    <div class="container">
+        <h2 style="margin-bottom: 2rem;">Product Management</h2>
+        
+        <div class="form-container" style="max-width: 100%; margin: 0 0 4rem 0;">
+            <h3 style="margin-bottom: 1.5rem;">Add New Product</h3>
+            <form id="add-product-form" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="p-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="p-category" class="form-control" placeholder="Electronics, Clothing, etc." required>
+                </div>
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" step="0.01" id="p-price" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Stock Quantity</label>
+                    <input type="number" id="p-stock" class="form-control" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Description</label>
+                    <textarea id="p-desc" class="form-control" style="height: 100px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="grid-column: span 2;">Add Product</button>
+            </form>
+        </div>
+
+        <h3 style="margin-bottom: 1.5rem;">Manage Categories</h3>
+        <div style="display:flex; gap:1rem; margin-bottom: 2rem;">
+            <input type="text" id="cat-name" class="form-control" style="max-width:300px" placeholder="Category Name">
+            <button class="btn btn-outline" onclick="addCategory()">Create Category</button>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const user = auth.getUser();
+        if (!user || user.role !== 'ROLE_ADMIN') {
+            alert('Access Denied');
+            window.location.href = '/';
+        }
+
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const product = {
+                name: document.getElementById('p-name').value,
+                categoryName: document.getElementById('p-category').value,
+                price: parseFloat(document.getElementById('p-price').value),
+                stockQuantity: parseInt(document.getElementById('p-stock').value),
+                description: document.getElementById('p-desc').value
+            };
+
+            try {
+                // Ensure category exists first or handle 404
+                await api.post('/products', product);
+                alert('Product added!');
+                e.target.reset();
+            } catch (err) {
+                alert('Error: ' + (err.message || 'Failed to add product. Make sure category exists.'));
+            }
+        });
+
+        async function addCategory() {
+            const name = document.getElementById('cat-name').value;
+            if (!name) return;
+            try {
+                await api.post('/categories', { name });
+                alert('Category created!');
+                document.getElementById('cat-name').value = '';
+            } catch (err) {
+                alert('Error adding category');
+            }
+        }
+    </script>
+</body>
+</html>

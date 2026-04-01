@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MountEdge | Premium E-Commerce</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons" id="auth-section">
+            <!-- Dynamic Content -->
+        </div>
+    </header>
+
+    <section class="hero animate-fade">
+        <h1>Elevate Your Lifestyle.</h1>
+        <p>Discover a curated collection of premium products designed for the modern explorer.</p>
+    </section>
+
+    <div class="container">
+        <h2 style="margin-bottom: 2rem;">Featured Products</h2>
+        <div class="grid" id="product-grid">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        function updateUI() {
+            const authSection = document.getElementById('auth-section');
+            const user = auth.getUser();
+            
+            if (auth.isAuthenticated()) {
+                document.getElementById('orders-link').style.display = 'block';
+                if (user.role === 'ROLE_ADMIN') {
+                    document.getElementById('admin-link').style.display = 'block';
+                }
+                authSection.innerHTML = `
+                    <span style="margin-right: 1rem;">Hi, ${user.name}</span>
+                    <button class="btn btn-outline" onclick="auth.logout()">Logout</button>
+                `;
+            } else {
+                authSection.innerHTML = `
+                    <a href="/login.html" class="btn btn-outline">Login</a>
+                    <a href="/register.html" class="btn btn-primary">Register</a>
+                `;
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const products = await api.get('/products');
+                const grid = document.getElementById('product-grid');
+                grid.innerHTML = products.map(p => `
+                    <div class="card">
+                        <div class="card-img">
+                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--primary); opacity: 0.5;">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                             </svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">${p.name}</div>
+                            <div class="card-price">$${p.price}</div>
+                            <div class="card-desc">${p.description || 'No description available'}</div>
+                            <button class="btn btn-primary w-full" style="width:100%" onclick="addToCart(${p.productId})">Add to Cart</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function addToCart(id) {
+            if (!auth.isAuthenticated()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            try {
+                await api.post('/cart/add', { productId: id, quantity: 1 });
+                alert('Product added to cart!');
+            } catch (err) {
+                alert('Failed to add to cart: ' + (err.message || 'Error'));
+            }
+        }
+
+        updateUI();
+        loadProducts();
+    </script>
+</body>
+</html>
