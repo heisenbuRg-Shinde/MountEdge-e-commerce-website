@@ -27,6 +27,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Wishlist wishlist;
+
     // Default constructor
     public User() {
     }
@@ -90,5 +93,16 @@ public class User {
     public void addAddress(Address address) {
         addresses.add(address);
         address.setUser(this);
+    }
+
+    public Wishlist getWishlist() {
+        return wishlist;
+    }
+
+    public void setWishlist(Wishlist wishlist) {
+        this.wishlist = wishlist;
+        if (wishlist != null && wishlist.getUser() != this) {
+            wishlist.setUser(this);
+        }
     }
 }

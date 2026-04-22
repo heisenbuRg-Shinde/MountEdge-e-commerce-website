@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .profile-section { background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 2rem; }
+        .address-card { border: 1px solid var(--glass-border); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav><ul><li><a href="/">Home</a></li></ul></nav>
+    </header>
+
+    <div class="container animate-fade">
+        <h2 style="margin-bottom: 2rem;">My Profile</h2>
+        
+        <div class="profile-section">
+            <h3>Account Details</h3>
+            <p style="color:var(--text-muted); margin-top:0.5rem;" id="user-info">Loading...</p>
+        </div>
+
+        <div class="profile-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3>Saved Addresses</h3>
+                <button class="btn btn-outline" onclick="document.getElementById('add-addr-form').style.display='block'">Add New</button>
+            </div>
+            
+            <form id="add-addr-form" style="display:none; margin-bottom: 2rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius:8px;" onsubmit="addAddress(event)">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <input type="text" id="al1" class="form-control" placeholder="Address Line 1" required>
+                    <input type="text" id="al2" class="form-control" placeholder="Address Line 2">
+                    <input type="text" id="city" class="form-control" placeholder="City" required>
+                    <input type="text" id="state" class="form-control" placeholder="State" required>
+                    <input type="text" id="pin" class="form-control" placeholder="Pincode" required>
+                </div>
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;"><input type="checkbox" id="def"> Set as Default</label>
+                <button type="submit" class="btn btn-primary">Save Address</button>
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('add-addr-form').style.display='none'">Cancel</button>
+            </form>
+
+            <div id="loading-addr" class="loader"></div>
+            <div id="addresses-list"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        if (!auth.isAuthenticated()) window.location.href = '/login.html';
+        
+        const user = auth.getUser();
+        document.getElementById('user-info').textContent = `${user.name} (${user.email})`;
+
+        async function loadAddresses() {
+            try {
+                const addresses = await api.get('/addresses');
+                document.getElementById('loading-addr').style.display = 'none';
+                
+                if (addresses.length === 0) {
+                    document.getElementById('addresses-list').innerHTML = '<p class="empty-state">No addresses saved.</p>';
+                    return;
+                }
+
+                document.getElementById('addresses-list').innerHTML = addresses.map(a => `
+                    <div class="address-card">
+                        ${a.default ? '<span class="status-badge" style="background:var(--primary);color:white;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.7rem;margin-bottom:0.5rem;display:inline-block;">Default</span>' : ''}
+                        <div style="font-weight:bold;">${a.addressLine1}</div>
+                        ${a.addressLine2 ? `<div>${a.addressLine2}</div>` : ''}
+                        <div>${a.city}, ${a.state} - ${a.pincode}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                utils.showError('Failed to load addresses');
+            }
+        }
+
+        async function addAddress(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            const payload = {
+                addressLine1: document.getElementById('al1').value,
+                addressLine2: document.getElementById('al2').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                pincode: document.getElementById('pin').value,
+                default: document.getElementById('def').checked
+            };
+
+            try {
+                await api.post('/addresses', payload);
+                utils.showToast('Address added successfully');
+                document.getElementById('add-addr-form').reset();
+                document.getElementById('add-addr-form').style.display = 'none';
+                loadAddresses();
+            } catch (err) {
+                utils.showError(err);
+            } finally {
+                btn.textContent = 'Save Address';
+                btn.disabled = false;
+            }
+        }
+
+        loadAddresses();
+    </script>
+</body>
+</html>

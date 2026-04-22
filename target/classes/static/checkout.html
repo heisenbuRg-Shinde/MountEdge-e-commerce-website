@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .checkout-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; max-width: 1000px; margin: 4rem auto; }
+        .section { background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 2rem; }
+        .address-card { padding: 1rem; border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 1rem; cursor: pointer; }
+        .address-card.selected { border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+        .order-summary-item { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 0.9rem; }
+        @media (max-width: 768px) { .checkout-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav><ul><li><a href="/">Home</a></li><li><a href="/cart.html">Cart</a></li></ul></nav>
+    </header>
+
+    <div class="container animate-fade" style="padding-top: 0;">
+        <div class="checkout-grid">
+            <div class="left-col">
+                <div class="section">
+                    <h3>1. Shipping Address</h3>
+                    <div id="address-list" style="margin-top: 1rem;">
+                        <div class="loader" id="addr-loader"></div>
+                    </div>
+                    <button class="btn btn-outline" style="width:100%" onclick="window.location.href='/profile.html'">Add New Address</button>
+                </div>
+                
+                <div class="section">
+                    <h3>2. Payment Method</h3>
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <label class="address-card" style="flex:1;">
+                            <input type="radio" name="payment" value="COD" checked> Cash on Delivery
+                        </label>
+                        <label class="address-card" style="flex:1;">
+                            <input type="radio" name="payment" value="ONLINE"> Online Payment
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-col">
+                <div class="section">
+                    <h3>Order Summary</h3>
+                    <div id="summary-items" style="margin: 1.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;"></div>
+                    <div class="order-summary-item" style="font-weight:bold; font-size: 1.2rem;">
+                        <span>Total:</span>
+                        <span id="summary-total">Rs. 0.00</span>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="placeOrder()">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        if (!auth.isAuthenticated()) window.location.href = '/login.html';
+        
+        let selectedAddressId = null;
+
+        async function initCheckout() {
+            try {
+                // Load Addresses
+                const addresses = await api.get('/addresses');
+                document.getElementById('addr-loader').style.display = 'none';
+                
+                if (addresses.length === 0) {
+                    document.getElementById('address-list').innerHTML = '<p class="empty-state">No addresses found.</p>';
+                } else {
+                    document.getElementById('address-list').innerHTML = addresses.map(a => `
+                        <div class="address-card ${a.default ? 'selected' : ''}" onclick="selectAddress(${a.addressId}, this)">
+                            <div style="font-weight:600">${a.addressLine1}</div>
+                            <div>${a.city}, ${a.state} - ${a.pincode}</div>
+                        </div>
+                    `).join('');
+                    
+                    const defaultAddr = addresses.find(a => a.default) || addresses[0];
+                    if (defaultAddr) selectedAddressId = defaultAddr.addressId;
+                }
+
+                // Load Cart
+                const cart = await api.get('/cart');
+                if (!cart.items || cart.items.length === 0) {
+                    window.location.href = '/cart.html';
+                    return;
+                }
+                
+                let total = 0;
+                document.getElementById('summary-items').innerHTML = cart.items.map(i => {
+                    const lineTotal = i.product.price * i.quantity;
+                    total += lineTotal;
+                    return `
+                        <div class="order-summary-item">
+                            <span>${i.product.name} (x${i.quantity})</span>
+                            <span>Rs. ${lineTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('summary-total').textContent = `$${total.toFixed(2)}`;
+                
+            } catch (err) {
+                utils.showError('Failed to initialize checkout');
+            }
+        }
+
+        function selectAddress(id, el) {
+            selectedAddressId = id;
+            document.querySelectorAll('.address-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        async function placeOrder() {
+            if (!selectedAddressId) {
+                utils.showError('Please select a shipping address');
+                return;
+            }
+            
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            
+            try {
+                // Checkout endpoint needs addressId and paymentMethod
+                const order = await api.post(`/orders/checkout?addressId=${selectedAddressId}&paymentMethod=${paymentMethod}`, {});
+                utils.showToast('Order placed successfully!');
+                setTimeout(() => {
+                    window.location.href = '/orders.html';
+                }, 1500);
+            } catch (err) {
+                utils.showError(err);
+            }
+        }
+
+        initCheckout();
+    </script>
+</body>
+</html>

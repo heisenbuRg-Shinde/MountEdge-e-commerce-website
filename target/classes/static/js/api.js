@@ -1,5 +1,31 @@
 const BASE_URL = '/api';
 
+const utils = {
+    showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    },
+    showError(err) {
+        let msg = 'An error occurred';
+        if (typeof err === 'string') msg = err;
+        else if (err.error) msg = err.error;
+        else if (err.message) msg = err.message;
+        
+        // Handle validation errors (object mapping)
+        if (typeof err === 'object' && !err.error && !err.message) {
+            msg = Object.values(err).join(', ');
+        }
+        
+        this.showToast(msg, 'error');
+    }
+};
+
 const api = {
     async get(endpoint) {
         const token = localStorage.getItem('token');
@@ -8,22 +34,55 @@ const api = {
                 'Authorization': token ? `Bearer ${token}` : ''
             }
         });
-        if (!response.ok) throw await response.json();
-        return response.json();
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
+            throw err;
+        }
+        // Handle empty responses
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
     },
 
     async post(endpoint, data) {
         const token = localStorage.getItem('token');
+        const isFormData = data instanceof FormData;
+        
+        const headers = {
+            'Authorization': token ? `Bearer ${token}` : ''
+        };
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method: 'POST',
+            headers: headers,
+            body: isFormData ? data : JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
+            throw err;
+        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
+    },
+
+    async put(endpoint, data) {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${BASE_URL}${endpoint}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': token ? `Bearer ${token}` : ''
             },
             body: JSON.stringify(data)
         });
-        if (!response.ok) throw await response.json();
-        return response.json();
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
+            throw err;
+        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
     },
 
     async delete(endpoint) {
@@ -34,17 +93,25 @@ const api = {
                 'Authorization': token ? `Bearer ${token}` : ''
             }
         });
-        if (!response.ok) throw await response.json();
-        return response.json();
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
+            throw err;
+        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
     }
 };
 
 const auth = {
     login: async (email, password) => {
-        const data = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data));
-        return data;
+        try {
+            const data = await api.post('/auth/login', { email, password });
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data));
+            return data;
+        } catch (e) {
+            throw e;
+        }
     },
     register: async (name, email, password) => {
         return api.post('/auth/register', { name, email, password });

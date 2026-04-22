@@ -18,17 +18,29 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id", nullable = false)
+    private Address shippingAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    private PaymentMethod paymentMethod;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; // "PENDING", "COMPLETED", "CANCELLED"
+    private OrderStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -38,8 +50,10 @@ public class Order {
     public Order() {
     }
 
-    public Order(User user, BigDecimal totalAmount, String status) {
+    public Order(User user, Address shippingAddress, PaymentMethod paymentMethod, BigDecimal totalAmount, OrderStatus status) {
         this.user = user;
+        this.shippingAddress = shippingAddress;
+        this.paymentMethod = paymentMethod;
         this.totalAmount = totalAmount;
         this.status = status;
     }
@@ -60,6 +74,22 @@ public class Order {
         this.user = user;
     }
 
+    public Address getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(Address shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -68,11 +98,11 @@ public class Order {
         this.totalAmount = totalAmount;
     }
 
-    public String getStatus() {
+    public OrderStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(OrderStatus status) {
         this.status = status;
     }
 
@@ -95,5 +125,18 @@ public class Order {
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
+    }
+
+    public List<OrderStatusHistory> getStatusHistory() {
+        return statusHistory;
+    }
+
+    public void setStatusHistory(List<OrderStatusHistory> statusHistory) {
+        this.statusHistory = statusHistory;
+    }
+
+    public void addStatusHistory(OrderStatusHistory history) {
+        statusHistory.add(history);
+        history.setOrder(this);
     }
 }

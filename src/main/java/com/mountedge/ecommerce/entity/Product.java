@@ -2,6 +2,8 @@ package com.mountedge.ecommerce.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -26,6 +28,12 @@ public class Product {
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Inventory inventory;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images = new ArrayList<>();
+
+    @Column(nullable = false)
+    private boolean active = true;
 
     public Product() {
     }
@@ -86,5 +94,31 @@ public class Product {
         if (inventory != null && inventory.getProduct() != this) {
             inventory.setProduct(this);
         }
+    }
+
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
+    }
+
+    public void addImage(ProductImage image) {
+        images.add(image);
+        image.setProduct(this);
+    }
+
+    public void removeImage(ProductImage image) {
+        images.remove(image);
+        image.setProduct(null);
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

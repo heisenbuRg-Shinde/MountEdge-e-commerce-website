@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tracking-container { max-width: 1000px; margin: 4rem auto; display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+        .map-container { background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--glass-border); height: 500px; position: relative; }
+        .tracking-info { background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid var(--glass-border); }
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--glass-border); }
+        .timeline-item { position: relative; margin-bottom: 2rem; }
+        .timeline-item::before { content: ''; position: absolute; left: -2.35rem; top: 0.2rem; width: 12px; height: 12px; border-radius: 50%; background: var(--glass-border); border: 2px solid var(--bg-main); }
+        .timeline-item.active::before { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        .status-title { font-weight: 600; margin-bottom: 0.2rem; }
+        .status-time { font-size: 0.8rem; color: var(--text-muted); }
+        @media (max-width: 768px) { .tracking-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav><ul><li><a href="/orders.html">Back to Orders</a></li></ul></nav>
+    </header>
+
+    <div class="container animate-fade">
+        <h2 style="margin-bottom: 1rem;">Track Order #<span id="order-id-display"></span></h2>
+        
+        <div class="tracking-container">
+            <div class="map-container">
+                <!-- Google Maps Embed (Mocked Location: Mumbai/Pune area for Indian Rupees context) -->
+                <iframe 
+                    id="google-map"
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15126.28620995241!2d73.8567437!3d18.5204303!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1713813600000!5m2!1sen!2sin">
+                </iframe>
+                <div style="position:absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.7); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+                    🚚 Delivery Partner: <b>SpeedyExpress</b>
+                </div>
+            </div>
+
+            <div class="tracking-info">
+                <h3>Delivery Status</h3>
+                <div style="margin: 1.5rem 0;" id="current-status-badge"></div>
+                
+                <div class="timeline">
+                    <div class="timeline-item active" id="step-placed">
+                        <div class="status-title">Order Placed</div>
+                        <div class="status-time" id="time-placed">Processing...</div>
+                    </div>
+                    <div class="timeline-item" id="step-confirmed">
+                        <div class="status-title">Order Confirmed</div>
+                        <div class="status-time">Pending</div>
+                    </div>
+                    <div class="timeline-item" id="step-shipped">
+                        <div class="status-title">Out for Delivery</div>
+                        <div class="status-time">Estimated: Today</div>
+                    </div>
+                    <div class="timeline-item" id="step-delivered">
+                        <div class="status-title">Delivered</div>
+                        <div class="status-time">Estimated: Tomorrow</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        if (!orderId) window.location.href = '/orders.html';
+        
+        document.getElementById('order-id-display').textContent = orderId;
+
+        async function updateTracking() {
+            try {
+                // In a real app, we'd fetch live GPS coords from a 'TrackingService'
+                // For this demo, we use the Order status to simulate the timeline
+                const orders = await api.get('/orders/my-orders?size=100');
+                const order = orders.content.find(o => o.orderId == orderId);
+                
+                if (!order) throw new Error('Order not found');
+
+                const statusBadge = document.getElementById('current-status-badge');
+                statusBadge.innerHTML = `<span class="status-badge status-${order.status}">${order.status}</span>`;
+
+                const steps = ['PLACED', 'CONFIRMED', 'SHIPPED', 'DELIVERED'];
+                const currentIndex = steps.indexOf(order.status);
+
+                if (currentIndex >= 0) {
+                    if (currentIndex >= 0) document.getElementById('step-placed').classList.add('active');
+                    if (currentIndex >= 1) document.getElementById('step-confirmed').classList.add('active');
+                    if (currentIndex >= 2) document.getElementById('step-shipped').classList.add('active');
+                    if (currentIndex >= 3) document.getElementById('step-delivered').classList.add('active');
+                }
+
+                // If shipped, show a more dynamic map (simulating a delivery route in Pune/Mumbai)
+                if (order.status === 'SHIPPED') {
+                    // Update map to a specific route view
+                    document.getElementById('google-map').src = "https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d30263.218556616!2d73.79155!3d18.555!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e6!4m5!1s0x3bc2bf2e67461101%3A0x828d4039562fb050!2sPune%20Railway%20Station!3m2!1d18.5289!2d73.8739!4m5!1s0x3bc2b9687e83f793%3A0x1d556488d55d2146!2sHinjewadi%20Phase%201!3m2!1d18.5913!2d73.7389!5e0!3m2!1sen!2sin!4v1713814000000!5m2!1sen!2sin";
+                }
+
+            } catch (err) {
+                utils.showError('Failed to load tracking info');
+            }
+        }
+
+        updateTracking();
+    </script>
+</body>
+</html>

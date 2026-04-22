@@ -18,16 +18,26 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
+    private final com.mountedge.ecommerce.repository.UserRepository userRepository;
 
-    public CartService(CartRepository cartRepository, ProductRepository productRepository, CartItemRepository cartItemRepository) {
+    public CartService(CartRepository cartRepository, ProductRepository productRepository, CartItemRepository cartItemRepository, com.mountedge.ecommerce.repository.UserRepository userRepository) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartItemRepository = cartItemRepository;
+        this.userRepository = userRepository;
     }
 
+    @Transactional
     public Cart getCartByUserId(Long userId) {
         return cartRepository.findByUserUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user"));
+                .orElseGet(() -> createCartForUser(userId));
+    }
+
+    private Cart createCartForUser(Long userId) {
+        com.mountedge.ecommerce.entity.User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Cart cart = new Cart(user);
+        return cartRepository.save(cart);
     }
 
     @Transactional

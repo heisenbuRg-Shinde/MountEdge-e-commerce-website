@@ -1,14 +1,14 @@
 package com.mountedge.ecommerce.controller;
 
+import com.mountedge.ecommerce.dto.OrderSummaryDto;
 import com.mountedge.ecommerce.config.UserDetailsImpl;
-import com.mountedge.ecommerce.dto.OrderDto;
 import com.mountedge.ecommerce.service.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -22,14 +22,30 @@ public class OrderController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<OrderDto> checkout(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                            @RequestBody Map<String, String> payload) {
-        String tokenRef = payload.get("tokenRef");
-        return ResponseEntity.ok(orderService.checkout(userDetails.getId(), tokenRef));
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<OrderSummaryDto> checkout(
+            Authentication authentication,
+            @RequestParam Long addressId,
+            @RequestParam String paymentMethod) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return ResponseEntity.ok(orderService.checkout(userDetails.getId(), addressId, paymentMethod));
     }
 
-    @GetMapping
-    public ResponseEntity<List<OrderDto>> getUserOrders(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(orderService.getUserOrders(userDetails.getId()));
+    @GetMapping("/my-orders")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<OrderSummaryDto>> getMyOrders(
+            Authentication authentication,
+            Pageable pageable) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return ResponseEntity.ok(orderService.getUserOrders(userDetails.getId(), pageable));
+    }
+
+    @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrderSummaryDto> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestParam String status,
+            @RequestParam(required = false) String notes) {
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status, notes));
     }
 }

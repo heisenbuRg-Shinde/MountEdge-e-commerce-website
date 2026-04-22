@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MountEdge | Premium E-Commerce</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .search-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 1rem;
+        }
+        .search-container input {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 1.1rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .filters select {
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: white;
+            border: 1px solid var(--glass-border);
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -13,7 +43,9 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="/cart.html">Cart</a></li>
+                <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
                 <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
                 <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
             </ul>
         </nav>
@@ -25,12 +57,32 @@
     <section class="hero animate-fade">
         <h1>Elevate Your Lifestyle.</h1>
         <p>Discover a curated collection of premium products designed for the modern explorer.</p>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search products..." onkeyup="handleSearch(event)">
+            <button class="btn btn-primary" onclick="loadProducts(true)">Search</button>
+        </div>
     </section>
 
     <div class="container">
+        <div class="filters">
+            <select id="categoryFilter" onchange="loadProducts(true)">
+                <option value="">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Home & Decor">Home & Decor</option>
+            </select>
+        </div>
+
         <h2 style="margin-bottom: 2rem;">Featured Products</h2>
+        <div id="loading" class="loader" style="display:none;"></div>
         <div class="grid" id="product-grid">
             <!-- Products will be loaded here -->
+        </div>
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <h3>No products found</h3>
+            <p>Try adjusting your search or filters.</p>
         </div>
     </div>
 
@@ -42,7 +94,9 @@
             
             if (auth.isAuthenticated()) {
                 document.getElementById('orders-link').style.display = 'block';
-                if (user.role === 'ROLE_ADMIN') {
+                document.getElementById('wishlist-link').style.display = 'block';
+                document.getElementById('profile-link').style.display = 'block';
+                if (user && user.role === 'ROLE_ADMIN') {
                     document.getElementById('admin-link').style.display = 'block';
                 }
                 authSection.innerHTML = `
@@ -57,27 +111,63 @@
             }
         }
 
-        async function loadProducts() {
+        function handleSearch(e) {
+            if (e.key === 'Enter') {
+                loadProducts(true);
+            }
+        }
+
+        async function loadProducts(reset = false) {
+            const grid = document.getElementById('product-grid');
+            const loader = document.getElementById('loading');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (reset) grid.innerHTML = '';
+            loader.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            const search = document.getElementById('searchInput').value;
+            const category = document.getElementById('categoryFilter').value;
+            
+            let url = '/products?size=20';
+            if (search) url += `&name=${encodeURIComponent(search)}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+
             try {
-                const products = await api.get('/products');
-                const grid = document.getElementById('product-grid');
+                const response = await api.get(url);
+                const products = response.content || [];
+                
+                loader.style.display = 'none';
+                
+                if (products.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
                 grid.innerHTML = products.map(p => `
                     <div class="card">
-                        <div class="card-img">
-                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--primary); opacity: 0.5;">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                             </svg>
+                        <div class="card-img" style="cursor:pointer;" onclick="window.location.href='/product-detail.html?id=${p.productId}'">
+                            ${p.imageUrls && p.imageUrls.length > 0 
+                                ? `<img src="${p.imageUrls[0]}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">`
+                                : `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--primary); opacity: 0.5;">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                   </svg>`
+                            }
                         </div>
                         <div class="card-content">
                             <div class="card-title">${p.name}</div>
-                            <div class="card-price">$${p.price}</div>
+                            <div class="card-price">Rs. ${p.price}</div>
                             <div class="card-desc">${p.description || 'No description available'}</div>
-                            <button class="btn btn-primary w-full" style="width:100%" onclick="addToCart(${p.productId})">Add to Cart</button>
+                            <div style="display:flex; gap: 0.5rem; margin-top: 1rem;">
+                                <button class="btn btn-primary" style="flex:1" onclick="addToCart(${p.productId})">Add to Cart</button>
+                                <button class="btn btn-outline" title="Add to Wishlist" onclick="addToWishlist(${p.productId})">♥</button>
+                            </div>
                         </div>
                     </div>
                 `).join('');
             } catch (err) {
-                console.error(err);
+                loader.style.display = 'none';
+                utils.showError('Failed to load products');
             }
         }
 
@@ -88,9 +178,22 @@
             }
             try {
                 await api.post('/cart/add', { productId: id, quantity: 1 });
-                alert('Product added to cart!');
+                utils.showToast('Added to cart!');
             } catch (err) {
-                alert('Failed to add to cart: ' + (err.message || 'Error'));
+                utils.showError(err);
+            }
+        }
+
+        async function addToWishlist(id) {
+            if (!auth.isAuthenticated()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            try {
+                await api.post(`/wishlist/add/${id}`);
+                utils.showToast('Added to wishlist!');
+            } catch (err) {
+                utils.showError(err);
             }
         }
 

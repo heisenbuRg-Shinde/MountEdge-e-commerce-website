@@ -5,47 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | MountEdge</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+        .stat-card { background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: 700; color: var(--primary); }
+    </style>
 </head>
 <body>
     <header>
-        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
-        <nav><ul><li><a href="/">Home</a></li></ul></nav>
+        <div class="logo">MountEdge Admin</div>
+        <nav><ul><li><a href="/">Storefront</a></li></ul></nav>
+        <button class="btn btn-outline" onclick="auth.logout()">Logout</button>
     </header>
 
-    <div class="container">
-        <h2 style="margin-bottom: 2rem;">Product Management</h2>
-        
-        <div class="form-container" style="max-width: 100%; margin: 0 0 4rem 0;">
-            <h3 style="margin-bottom: 1.5rem;">Add New Product</h3>
-            <form id="add-product-form" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
-                <div class="form-group">
-                    <label>Product Name</label>
-                    <input type="text" id="p-name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <input type="text" id="p-category" class="form-control" placeholder="Electronics, Clothing, etc." required>
-                </div>
-                <div class="form-group">
-                    <label>Price ($)</label>
-                    <input type="number" step="0.01" id="p-price" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Stock Quantity</label>
-                    <input type="number" id="p-stock" class="form-control" required>
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Description</label>
-                    <textarea id="p-desc" class="form-control" style="height: 100px;"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" style="grid-column: span 2;">Add Product</button>
-            </form>
+    <div class="container animate-fade">
+        <h2 style="margin-bottom: 2rem;">Dashboard</h2>
+        <div id="loading" class="loader"></div>
+        <div class="stats-grid" id="stats-grid" style="display:none;">
+            <div class="stat-card"><div>Total Users</div><div class="stat-val" id="stat-users">0</div></div>
+            <div class="stat-card"><div>Total Orders</div><div class="stat-val" id="stat-orders">0</div></div>
+            <div class="stat-card"><div>Revenue</div><div class="stat-val" id="stat-rev">Rs. 0</div></div>
+            <div class="stat-card"><div>Low Stock</div><div class="stat-val" id="stat-stock" style="color:var(--secondary)">0</div></div>
         </div>
 
-        <h3 style="margin-bottom: 1.5rem;">Manage Categories</h3>
-        <div style="display:flex; gap:1rem; margin-bottom: 2rem;">
-            <input type="text" id="cat-name" class="form-control" style="max-width:300px" placeholder="Category Name">
-            <button class="btn btn-outline" onclick="addCategory()">Create Category</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3>Product Management</h3>
+            <button class="btn btn-primary" onclick="document.getElementById('add-product-modal').style.display='block'">Add Product</button>
+        </div>
+
+        <!-- Add/Edit Product Modal -->
+        <div id="add-product-modal" style="display:none; background:rgba(0,0,0,0.8); position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; align-items:center; justify-content:center; padding: 1rem;">
+            <div style="background:var(--bg-card); padding:2rem; border-radius:12px; max-width:600px; width:100%; border:1px solid var(--glass-border); max-height: 90vh; overflow-y: auto;">
+                <h3 id="modal-title" style="margin-bottom:1rem;">Add New Product</h3>
+                <form id="add-product-form" onsubmit="submitProduct(event)">
+                    <input type="hidden" id="editing-id">
+                    <div style="margin-bottom:1rem;">
+                        <input type="text" id="p-name" class="form-control" placeholder="Product Name" required>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <textarea id="p-desc" class="form-control" placeholder="Product Description" rows="3" required></textarea>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                        <input type="number" id="p-price" class="form-control" placeholder="Price" step="0.01" required>
+                        <input type="number" id="p-stock" class="form-control" placeholder="Initial Stock" required>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <input type="text" id="p-cat" class="form-control" placeholder="Category Name (e.g. Electronics)" required>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <label>Product Images</label>
+                        <input type="file" id="p-images" class="form-control" multiple accept="image/*" style="margin-top:0.5rem;">
+                    </div>
+                    <div style="display:flex; gap:1rem;">
+                        <button type="submit" class="btn btn-primary" style="flex:1" id="btn-submit-p">Save Product</button>
+                        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="background:var(--bg-card); padding: 1.5rem; border-radius:12px; border:1px solid var(--glass-border); margin-top:2rem;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom: 1px solid var(--glass-border);">
+                        <th style="padding: 1rem;">ID</th>
+                        <th style="padding: 1rem;">Name</th>
+                        <th style="padding: 1rem;">Price</th>
+                        <th style="padding: 1rem;">Stock</th>
+                        <th style="padding: 1rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="product-list">
+                    <!-- Products will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" style="display:none; background:rgba(0,0,0,0.8); position:fixed; top:0; left:0; width:100%; height:100%; z-index:1001; align-items:center; justify-content:center; padding: 1rem;">
+        <div style="background:var(--bg-card); padding:2rem; border-radius:12px; max-width:400px; width:100%; border:1px solid var(--glass-border); text-align:center;">
+            <h3 style="margin-bottom:1rem;">Delete Product?</h3>
+            <p style="margin-bottom:2rem; opacity:0.8;">Are you sure you want to remove this product? This action cannot be undone.</p>
+            <input type="hidden" id="delete-id">
+            <div style="display:flex; gap:1rem;">
+                <button class="btn btn-primary" style="flex:1; background:var(--secondary);" onclick="confirmDelete()">Delete</button>
+                <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('delete-modal').style.display='none'">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -53,41 +99,149 @@
     <script>
         const user = auth.getUser();
         if (!user || user.role !== 'ROLE_ADMIN') {
-            alert('Access Denied');
             window.location.href = '/';
         }
 
-        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const product = {
-                name: document.getElementById('p-name').value,
-                categoryName: document.getElementById('p-category').value,
-                price: parseFloat(document.getElementById('p-price').value),
-                stockQuantity: parseInt(document.getElementById('p-stock').value),
-                description: document.getElementById('p-desc').value
-            };
+        document.getElementById('add-product-modal').style.display = 'none';
 
+        async function loadStats() {
             try {
-                // Ensure category exists first or handle 404
-                await api.post('/products', product);
-                alert('Product added!');
-                e.target.reset();
+                const stats = await api.get('/admin/dashboard/stats');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('stats-grid').style.display = 'grid';
+                
+                document.getElementById('stat-users').textContent = stats.totalUsers;
+                document.getElementById('stat-orders').textContent = stats.totalOrders;
+                document.getElementById('stat-rev').textContent = 'Rs. ' + (stats.totalRevenue ? stats.totalRevenue.toFixed(2) : '0.00');
+                document.getElementById('stat-stock').textContent = stats.lowStockProducts;
             } catch (err) {
-                alert('Error: ' + (err.message || 'Failed to add product. Make sure category exists.'));
-            }
-        });
-
-        async function addCategory() {
-            const name = document.getElementById('cat-name').value;
-            if (!name) return;
-            try {
-                await api.post('/categories', { name });
-                alert('Category created!');
-                document.getElementById('cat-name').value = '';
-            } catch (err) {
-                alert('Error adding category');
+                document.getElementById('loading').style.display = 'none';
+                utils.showError('Failed to load stats');
             }
         }
+
+        async function loadProducts() {
+            try {
+                const data = await api.get('/products?size=100');
+                const list = document.getElementById('product-list');
+                list.innerHTML = data.content.map(p => `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 1rem;">${p.productId}</td>
+                        <td style="padding: 1rem;">${p.name}</td>
+                        <td style="padding: 1rem;">Rs. ${p.price}</td>
+                        <td style="padding: 1rem;">${p.stockQuantity}</td>
+                        <td style="padding: 1rem;">
+                            <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-right:0.5rem;" onclick="editProduct(${p.productId})">Edit</button>
+                            <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.8rem; color:var(--secondary); border-color:var(--secondary);" onclick="deleteProduct(${p.productId})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { utils.showError('Failed to load products'); }
+        }
+
+        async function editProduct(id) {
+            try {
+                const p = await api.get(`/products/${id}`);
+                document.getElementById('editing-id').value = id;
+                document.getElementById('p-name').value = p.name;
+                document.getElementById('p-desc').value = p.description;
+                document.getElementById('p-price').value = p.price;
+                document.getElementById('p-stock').value = p.stockQuantity;
+                document.getElementById('p-cat').value = p.categoryName;
+                
+                document.getElementById('modal-title').textContent = 'Edit Product';
+                document.getElementById('add-product-modal').style.display = 'flex';
+            } catch (err) { utils.showError('Failed to load product details'); }
+        }
+
+        function deleteProduct(id) {
+            document.getElementById('delete-id').value = id;
+            document.getElementById('delete-modal').style.display = 'flex';
+        }
+
+        async function confirmDelete() {
+            const id = document.getElementById('delete-id').value;
+            const btn = document.querySelector('#delete-modal .btn-primary');
+            btn.textContent = 'Deleting...';
+            btn.disabled = true;
+
+            try {
+                await api.delete(`/products/${id}`);
+                utils.showToast('Product deleted successfully');
+                document.getElementById('delete-modal').style.display = 'none';
+                await loadProducts();
+                await loadStats();
+            } catch (err) { 
+                console.error('Delete error:', err);
+                utils.showError(err.message || 'Failed to delete product'); 
+            } finally {
+                btn.textContent = 'Delete';
+                btn.disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('add-product-modal').style.display = 'none';
+            document.getElementById('add-product-form').reset();
+            document.getElementById('editing-id').value = '';
+            document.getElementById('modal-title').textContent = 'Add New Product';
+        }
+
+        async function submitProduct(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-p');
+            const editingId = document.getElementById('editing-id').value;
+            
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('productDto', new Blob([JSON.stringify({
+                name: document.getElementById('p-name').value,
+                description: document.getElementById('p-desc').value,
+                price: parseFloat(document.getElementById('p-price').value),
+                categoryName: document.getElementById('p-cat').value,
+                stockQuantity: parseInt(document.getElementById('p-stock').value)
+            })], { type: "application/json" }));
+
+            const files = document.getElementById('p-images').files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const url = editingId ? `/api/products/${editingId}` : '/api/products';
+                const method = editingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Failed to save product');
+                
+                utils.showToast(editingId ? 'Product updated!' : 'Product added!');
+                closeModal();
+                loadProducts();
+                loadStats();
+            } catch (err) {
+                utils.showError(err.message || 'Error saving product');
+            } finally {
+                btn.textContent = 'Save Product';
+                btn.disabled = false;
+            }
+        }
+
+        // Setup modal flex display override on click
+        document.querySelector('.btn-primary[onclick*="modal"]').onclick = () => {
+            closeModal();
+            document.getElementById('add-product-modal').style.display = 'flex';
+        };
+
+        loadStats();
+        loadProducts();
     </script>
 </body>
 </html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 2rem; }
+        .img-container { background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--glass-border); height: 400px; display: flex; align-items:center; justify-content:center; }
+        .info-container { display: flex; flex-direction: column; justify-content: center; }
+        .p-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .p-price { font-size: 2rem; color: var(--primary); font-weight: 600; margin-bottom: 1.5rem; }
+        .p-desc { color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem; }
+        @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <nav><ul><li><a href="/">Home</a></li><li><a href="/cart.html">Cart</a></li></ul></nav>
+    </header>
+
+    <div class="container animate-fade">
+        <div id="loading" class="loader"></div>
+        <div id="product-content" class="detail-grid" style="display:none;">
+            <div class="img-container" id="p-img">
+                <!-- Image -->
+            </div>
+            <div class="info-container">
+                <div style="color:var(--text-muted); text-transform:uppercase; font-size:0.9rem; letter-spacing:1px;" id="p-cat"></div>
+                <h1 class="p-title" id="p-name"></h1>
+                <div class="p-price" id="p-price"></div>
+                <p class="p-desc" id="p-desc"></p>
+                <div style="display:flex; gap:1rem;">
+                    <button class="btn btn-primary" style="flex:2; padding: 1rem;" id="btn-add">Add to Cart</button>
+                    <button class="btn btn-outline" style="flex:1" id="btn-wish">♥ Wishlist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        if (!productId) window.location.href = '/';
+
+        async function loadProduct() {
+            try {
+                const p = await api.get(`/products/${productId}`);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('product-content').style.display = 'grid';
+
+                document.getElementById('p-cat').textContent = p.categoryName;
+                document.getElementById('p-name').textContent = p.name;
+                document.getElementById('p-price').textContent = `Rs. ${p.price.toFixed(2)}`;
+                document.getElementById('p-desc').textContent = p.description || 'No description available.';
+
+                if (p.imageUrls && p.imageUrls.length > 0) {
+                    document.getElementById('p-img').innerHTML = `<img src="${p.imageUrls[0]}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    document.getElementById('p-img').innerHTML = '<span style="color:var(--text-muted)">No Image Available</span>';
+                }
+
+                document.getElementById('btn-add').onclick = () => addToCart(p.productId);
+                document.getElementById('btn-wish').onclick = () => addToWishlist(p.productId);
+
+            } catch (err) {
+                utils.showError('Product not found');
+                setTimeout(() => window.location.href = '/', 2000);
+            }
+        }
+
+        async function addToCart(id) {
+            if (!auth.isAuthenticated()) { window.location.href = '/login.html'; return; }
+            try {
+                await api.post('/cart/add', { productId: id, quantity: 1 });
+                utils.showToast('Added to cart!');
+            } catch (err) { utils.showError(err); }
+        }
+
+        async function addToWishlist(id) {
+            if (!auth.isAuthenticated()) { window.location.href = '/login.html'; return; }
+            try {
+                await api.post(`/wishlist/add/${id}`);
+                utils.showToast('Added to wishlist!');
+            } catch (err) { utils.showError(err); }
+        }
+
+        loadProduct();
+    </script>
+</body>
+</html>

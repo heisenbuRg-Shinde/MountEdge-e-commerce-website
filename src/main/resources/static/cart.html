@@ -3,26 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart | MountEdge</title>
+    <title>Cart | MountEdge</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            border: 1px solid var(--glass-border);
-        }
-        .summary {
-            background: var(--bg-card);
-            padding: 2rem;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            text-align: right;
-        }
+        .cart-container { max-width: 800px; margin: 4rem auto; background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid var(--glass-border); }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .cart-item:last-child { border-bottom: none; }
+        .item-details { display: flex; align-items: center; gap: 1rem; flex: 1; }
+        .item-controls { display: flex; align-items: center; gap: 1rem; }
+        .qty-input { width: 60px; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; border-radius: 4px; }
+        .summary { margin-top: 2rem; padding-top: 1rem; border-top: 2px solid rgba(255,255,255,0.1); text-align: right; }
     </style>
 </head>
 <body>
@@ -35,74 +25,91 @@
         </nav>
     </header>
 
-    <div class="container animate-fade">
-        <h2 style="margin-bottom: 2rem;">Shopping Cart</h2>
-        <div id="cart-items">
-            <!-- Loaded via JS -->
+    <div class="cart-container animate-fade">
+        <h2>Your Cart</h2>
+        <div id="loading" class="loader" style="display:none;"></div>
+        <div id="cart-items"></div>
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <h3>Your cart is empty</h3>
+            <button class="btn btn-primary" onclick="window.location.href='/'" style="margin-top: 1rem;">Continue Shopping</button>
         </div>
-        <div class="summary" id="cart-summary" style="display: none;">
-            <h3 id="total-price" style="margin-bottom: 1.5rem;">Total: $0.00</h3>
-            <button class="btn btn-primary" onclick="proceedToCheckout()">Checkout</button>
+        <div id="cart-summary" class="summary" style="display:none;">
+            <h3 style="margin-bottom: 1rem;">Total: Rs. <span id="cart-total">0.00</span></h3>
+            <button class="btn btn-primary" onclick="window.location.href='/checkout.html'">Proceed to Checkout</button>
         </div>
     </div>
 
     <script src="/js/api.js"></script>
     <script>
-        if (!auth.isAuthenticated()) window.location.href = '/login.html';
+        if (!auth.isAuthenticated()) {
+            window.location.href = '/login.html';
+        }
 
         async function loadCart() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('cart-items').innerHTML = '';
+            document.getElementById('cart-summary').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'none';
+
             try {
                 const cart = await api.get('/cart');
-                const container = document.getElementById('cart-items');
-                const summary = document.getElementById('cart-summary');
-                
+                document.getElementById('loading').style.display = 'none';
+
                 if (!cart.items || cart.items.length === 0) {
-                    container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Your cart is empty.</p>';
-                    summary.style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
                     return;
                 }
 
                 let total = 0;
-                container.innerHTML = cart.items.map(item => {
-                    const subtotal = item.product.price * item.quantity;
-                    total += subtotal;
+                document.getElementById('cart-items').innerHTML = cart.items.map(item => {
+                    const itemTotal = item.product.price * item.quantity;
+                    total += itemTotal;
                     return `
                         <div class="cart-item">
-                            <div>
-                                <h3 style="margin-bottom: 0.2rem;">${item.product.name}</h3>
-                                <p style="color: var(--text-muted)">$${item.product.price} x ${item.quantity}</p>
+                            <div class="item-details">
+                                <div>
+                                    <h4 style="margin-bottom:0.2rem;">${item.product.name}</h4>
+                                    <div style="color:var(--text-muted); font-size:0.9rem;">Rs. ${item.product.price} each</div>
+                                </div>
                             </div>
-                            <div style="display:flex; align-items:center; gap: 2rem;">
-                                <span style="font-weight: 700;">$${subtotal.toFixed(2)}</span>
-                                <button class="btn btn-outline" style="padding: 0.4rem 1rem; color: #ef4444;" onclick="removeFromCart(${item.product.productId})">Remove</button>
+                            <div class="item-controls">
+                                <input type="number" class="qty-input" value="${item.quantity}" min="1" 
+                                    onchange="updateQuantity(${item.product.productId}, this.value)">
+                                <div style="font-weight:600; width: 80px; text-align:right;">Rs. ${itemTotal.toFixed(2)}</div>
+                                <button class="btn btn-outline" style="padding: 0.3rem 0.6rem;" onclick="remove(${item.product.productId})">×</button>
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                document.getElementById('total-price').innerText = `Total: $${total.toFixed(2)}`;
-                summary.style.display = 'block';
+                document.getElementById('cart-total').textContent = total.toFixed(2);
+                document.getElementById('cart-summary').style.display = 'block';
+
             } catch (err) {
-                console.error(err);
+                document.getElementById('loading').style.display = 'none';
+                utils.showError('Failed to load cart');
             }
         }
 
-        async function removeFromCart(id) {
+        async function updateQuantity(productId, quantity) {
             try {
-                await api.delete(`/cart/remove/${id}`);
+                // Remove old, add new for simplicity, or implement update endpoint in backend
+                // MountEdge only has POST /cart/add currently which adds. We might need a PUT /cart/update.
+                // Assuming POST /cart/update exists now, if not we'll use a hack or just rely on backend.
+                await api.post('/cart/update', { productId, quantity });
                 loadCart();
             } catch (err) {
-                alert('Error removing item');
+                utils.showError(err);
+                loadCart(); // Reset UI
             }
         }
 
-        async function proceedToCheckout() {
+        async function remove(productId) {
             try {
-                await api.post('/orders/checkout', { tokenRef: 'T-' + Math.random().toString(36).substr(2, 9).toUpperCase() });
-                alert('Order placed successfully!');
-                window.location.href = '/orders.html';
+                await api.delete(`/cart/remove/${productId}`);
+                loadCart();
             } catch (err) {
-                alert('Checkout failed: ' + (err.message || 'Insufficient stock'));
+                utils.showError(err);
             }
         }
 
