@@ -37,6 +37,8 @@ public class ProductMapper {
                     .collect(Collectors.toList()));
         }
 
+        dto.setBestSeller(product.getBestSeller() != null ? product.getBestSeller() : false);
+
         return dto;
     }
 }

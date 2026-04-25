@@ -14,15 +14,27 @@
         .qty-input { width: 60px; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; border-radius: 4px; }
         .summary { margin-top: 2rem; padding-top: 1rem; border-top: 2px solid rgba(255,255,255,0.1); text-align: right; }
     </style>
+    <link rel="icon" href="/images/logo.png">
 </head>
 <body>
-    <header>
-        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
+        <header>
+        <div class="logo" onclick="window.location.href='/'">
+            <img src="/images/logo.png" alt="Logo">
+            <span>MountEdge</span>
+        </div>
         <nav>
             <ul>
                 <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
+                <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
+                <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
             </ul>
         </nav>
+        <div class="auth-buttons" id="auth-section">
+            <!-- Dynamic Content -->
+        </div>
     </header>
 
     <div class="cart-container animate-fade">
@@ -34,7 +46,11 @@
             <button class="btn btn-primary" onclick="window.location.href='/'" style="margin-top: 1rem;">Continue Shopping</button>
         </div>
         <div id="cart-summary" class="summary" style="display:none;">
-            <h3 style="margin-bottom: 1rem;">Total: Rs. <span id="cart-total">0.00</span></h3>
+            <div style="text-align: left; margin-bottom: 1.5rem; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid var(--glass-border);">
+                <strong style="color: var(--text-main);">🚚 Expected Delivery:</strong>
+                <span id="delivery-date" style="color: var(--primary); font-weight: 600; margin-left: 0.5rem;"></span>
+            </div>
+            <h3 style="margin-bottom: 1rem;">Total: ₹ <span id="cart-total">0.00</span></h3>
             <button class="btn btn-primary" onclick="window.location.href='/checkout.html'">Proceed to Checkout</button>
         </div>
     </div>
@@ -69,13 +85,13 @@
                             <div class="item-details">
                                 <div>
                                     <h4 style="margin-bottom:0.2rem;">${item.product.name}</h4>
-                                    <div style="color:var(--text-muted); font-size:0.9rem;">Rs. ${item.product.price} each</div>
+                                    <div style="color:var(--text-muted); font-size:0.9rem;">₹ ${item.product.price} each</div>
                                 </div>
                             </div>
                             <div class="item-controls">
                                 <input type="number" class="qty-input" value="${item.quantity}" min="1" 
                                     onchange="updateQuantity(${item.product.productId}, this.value)">
-                                <div style="font-weight:600; width: 80px; text-align:right;">Rs. ${itemTotal.toFixed(2)}</div>
+                                <div style="font-weight:600; width: 80px; text-align:right;">₹ ${itemTotal.toFixed(2)}</div>
                                 <button class="btn btn-outline" style="padding: 0.3rem 0.6rem;" onclick="remove(${item.product.productId})">×</button>
                             </div>
                         </div>
@@ -83,6 +99,12 @@
                 }).join('');
 
                 document.getElementById('cart-total').textContent = total.toFixed(2);
+                
+                const delivery = new Date();
+                delivery.setDate(delivery.getDate() + 5);
+                const options = { weekday: 'short', month: 'short', day: 'numeric' };
+                document.getElementById('delivery-date').textContent = delivery.toLocaleDateString('en-US', options) + " - " + new Date(delivery.getTime() + 2*24*60*60*1000).toLocaleDateString('en-US', options);
+
                 document.getElementById('cart-summary').style.display = 'block';
 
             } catch (err) {
@@ -115,5 +137,30 @@
 
         loadCart();
     </script>
+    <footer class="site-footer">
+        <div class="footer-col">
+            <h4>MountEdge</h4>
+            <p>Elevate your lifestyle with premium products designed for the modern explorer.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li><a href="/wishlist.html">Wishlist</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Customer Service</h4>
+            <ul>
+                <li><a href="/orders.html">My Orders</a></li>
+                <li><a href="/profile.html">My Profile</a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2023 MountEdge E-Commerce. All Rights Reserved.
+        </div>
+    </footer>
 </body>
 </html>
+

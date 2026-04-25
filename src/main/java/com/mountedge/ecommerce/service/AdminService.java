@@ -5,6 +5,7 @@ import com.mountedge.ecommerce.repository.OrderRepository;
 import com.mountedge.ecommerce.repository.ProductRepository;
 import com.mountedge.ecommerce.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -21,6 +22,7 @@ public class AdminService {
         this.productRepository = productRepository;
     }
 
+    @Transactional(readOnly = true)
     public DashboardStatsDto getDashboardStats() {
         long totalUsers = userRepository.count();
         long totalOrders = orderRepository.count();

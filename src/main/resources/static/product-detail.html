@@ -14,11 +14,27 @@
         .p-desc { color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem; }
         @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
     </style>
+    <link rel="icon" href="/images/logo.png">
 </head>
 <body>
-    <header>
-        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
-        <nav><ul><li><a href="/">Home</a></li><li><a href="/cart.html">Cart</a></li></ul></nav>
+        <header>
+        <div class="logo" onclick="window.location.href='/'">
+            <img src="/images/logo.png" alt="Logo">
+            <span>MountEdge</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
+                <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
+                <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons" id="auth-section">
+            <!-- Dynamic Content -->
+        </div>
     </header>
 
     <div class="container animate-fade">
@@ -29,12 +45,20 @@
             </div>
             <div class="info-container">
                 <div style="color:var(--text-muted); text-transform:uppercase; font-size:0.9rem; letter-spacing:1px;" id="p-cat"></div>
+                <div id="p-badge" style="margin-bottom: 0.5rem; margin-top: 0.5rem;"></div>
                 <h1 class="p-title" id="p-name"></h1>
                 <div class="p-price" id="p-price"></div>
                 <p class="p-desc" id="p-desc"></p>
-                <div style="display:flex; gap:1rem;">
-                    <button class="btn btn-primary" style="flex:2; padding: 1rem;" id="btn-add">Add to Cart</button>
-                    <button class="btn btn-outline" style="flex:1" id="btn-wish">♥ Wishlist</button>
+                <div style="display:flex; align-items:center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <label for="p-qty" style="font-weight: 600; color: var(--text-muted);">Quantity:</label>
+                    <input type="number" id="p-qty" value="1" min="1" style="width: 80px; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 1.1rem; text-align: center;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <div style="display:flex; gap:1rem;">
+                        <button class="btn btn-primary" style="flex:2; padding: 1rem;" id="btn-add">Add to Cart</button>
+                        <button class="btn btn-outline" style="flex:1; padding: 1rem;" id="btn-wish">♥ Wishlist</button>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; padding: 1rem; background: var(--secondary); border: none;" id="btn-buy-now">Buy Now</button>
                 </div>
             </div>
         </div>
@@ -54,8 +78,13 @@
                 document.getElementById('product-content').style.display = 'grid';
 
                 document.getElementById('p-cat').textContent = p.categoryName;
+                if(p.bestSeller) {
+                    document.getElementById('p-badge').innerHTML = '<span style="background:var(--secondary); color:white; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">Best Seller</span>';
+                } else {
+                    document.getElementById('p-badge').innerHTML = '';
+                }
                 document.getElementById('p-name').textContent = p.name;
-                document.getElementById('p-price').textContent = `Rs. ${p.price.toFixed(2)}`;
+                document.getElementById('p-price').textContent = `₹ ${p.price.toFixed(2)}`;
                 document.getElementById('p-desc').textContent = p.description || 'No description available.';
 
                 if (p.imageUrls && p.imageUrls.length > 0) {
@@ -66,6 +95,7 @@
 
                 document.getElementById('btn-add').onclick = () => addToCart(p.productId);
                 document.getElementById('btn-wish').onclick = () => addToWishlist(p.productId);
+                document.getElementById('btn-buy-now').onclick = () => buyNow(p.productId);
 
             } catch (err) {
                 utils.showError('Product not found');
@@ -76,8 +106,18 @@
         async function addToCart(id) {
             if (!auth.isAuthenticated()) { window.location.href = '/login.html'; return; }
             try {
-                await api.post('/cart/add', { productId: id, quantity: 1 });
+                const qty = parseInt(document.getElementById('p-qty').value) || 1;
+                await api.post('/cart/add', { productId: id, quantity: qty });
                 utils.showToast('Added to cart!');
+            } catch (err) { utils.showError(err); }
+        }
+
+        async function buyNow(id) {
+            if (!auth.isAuthenticated()) { window.location.href = '/login.html'; return; }
+            try {
+                const qty = parseInt(document.getElementById('p-qty').value) || 1;
+                await api.post('/cart/add', { productId: id, quantity: qty });
+                window.location.href = '/checkout.html';
             } catch (err) { utils.showError(err); }
         }
 
@@ -91,5 +131,30 @@
 
         loadProduct();
     </script>
+    <footer class="site-footer">
+        <div class="footer-col">
+            <h4>MountEdge</h4>
+            <p>Elevate your lifestyle with premium products designed for the modern explorer.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li><a href="/wishlist.html">Wishlist</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Customer Service</h4>
+            <ul>
+                <li><a href="/orders.html">My Orders</a></li>
+                <li><a href="/profile.html">My Profile</a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2023 MountEdge E-Commerce. All Rights Reserved.
+        </div>
+    </footer>
 </body>
 </html>
+

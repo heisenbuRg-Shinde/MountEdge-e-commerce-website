@@ -124,3 +124,35 @@ const auth = {
     isAuthenticated: () => !!localStorage.getItem('token'),
     getUser: () => JSON.parse(localStorage.getItem('user'))
 };
+
+function updateUI() {
+    const user = auth.getUser();
+    const authSection = document.getElementById('auth-section');
+    if (!authSection) return;
+    
+    if (user) {
+        authSection.innerHTML = `
+            <span style="color: var(--text-main); font-weight: 500; margin-right: 1rem;">Hi, ${user.name}</span>
+            <button class="btn btn-outline" onclick="auth.logout()" style="padding: 0.4rem 1.2rem; font-size: 0.9rem;">Logout</button>
+        `;
+        const wl = document.getElementById('wishlist-link');
+        const ol = document.getElementById('orders-link');
+        const pl = document.getElementById('profile-link');
+        const al = document.getElementById('admin-link');
+        
+        if (wl) wl.style.display = 'inline-block';
+        if (ol) ol.style.display = 'inline-block';
+        if (pl) pl.style.display = 'inline-block';
+        
+        if (user.role === 'ROLE_ADMIN' && al) {
+            al.style.display = 'inline-block';
+        }
+    } else {
+        authSection.innerHTML = `
+            <a href="/login.html" class="btn btn-outline" style="padding: 0.4rem 1.2rem; font-size: 0.9rem;">Login</a>
+            <a href="/register.html" class="btn btn-primary" style="padding: 0.4rem 1.2rem; font-size: 0.9rem;">Register</a>
+        `;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateUI);

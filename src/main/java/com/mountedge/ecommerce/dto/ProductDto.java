@@ -27,6 +27,8 @@ public class ProductDto {
 
     private List<String> imageUrls;
 
+    private Boolean bestSeller;
+
     public ProductDto() {}
 
     public ProductDto(Long productId, String name, String description, BigDecimal price, String categoryName, Integer stockQuantity, List<String> imageUrls) {
@@ -37,6 +39,7 @@ public class ProductDto {
         this.categoryName = categoryName;
         this.stockQuantity = stockQuantity;
         this.imageUrls = imageUrls;
+        this.bestSeller = false;
     }
 
     public Long getProductId() { return productId; }
@@ -53,4 +56,6 @@ public class ProductDto {
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
     public List<String> getImageUrls() { return imageUrls; }
     public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
+    public Boolean getBestSeller() { return bestSeller; }
+    public void setBestSeller(Boolean bestSeller) { this.bestSeller = bestSeller; }
 }

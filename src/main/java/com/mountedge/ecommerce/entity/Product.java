@@ -35,6 +35,9 @@ public class Product {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "is_best_seller")
+    private Boolean bestSeller = false;
+
     public Product() {
     }
 
@@ -120,5 +123,13 @@ public class Product {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Boolean getBestSeller() {
+        return bestSeller;
+    }
+
+    public void setBestSeller(Boolean bestSeller) {
+        this.bestSeller = bestSeller;
     }
 }

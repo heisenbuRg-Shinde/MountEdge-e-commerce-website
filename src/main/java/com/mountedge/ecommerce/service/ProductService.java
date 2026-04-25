@@ -83,6 +83,9 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         Product product = new Product(category, productDto.getName(), productDto.getDescription(), productDto.getPrice());
+        if (productDto.getBestSeller() != null) {
+            product.setBestSeller(productDto.getBestSeller());
+        }
         
         Inventory inventory = new Inventory(product, productDto.getStockQuantity());
         product.setInventory(inventory);
@@ -121,6 +124,9 @@ public class ProductService {
         product.setDescription(productDto.getDescription());
         product.setPrice(productDto.getPrice());
         product.setCategory(category);
+        if (productDto.getBestSeller() != null) {
+            product.setBestSeller(productDto.getBestSeller());
+        }
 
         if (product.getInventory() != null) {
             product.getInventory().setStockQuantity(productDto.getStockQuantity());

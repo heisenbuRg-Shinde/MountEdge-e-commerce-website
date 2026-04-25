@@ -5,11 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wishlist | MountEdge</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="/images/logo.png">
 </head>
 <body>
-    <header>
-        <div class="logo" onclick="window.location.href='/'">MountEdge</div>
-        <nav><ul><li><a href="/">Home</a></li></ul></nav>
+        <header>
+        <div class="logo" onclick="window.location.href='/'">
+            <img src="/images/logo.png" alt="Logo">
+            <span>MountEdge</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
+                <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
+                <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons" id="auth-section">
+            <!-- Dynamic Content -->
+        </div>
     </header>
 
     <div class="container animate-fade">
@@ -39,7 +55,7 @@
                     <div class="card">
                         <div class="card-content">
                             <div class="card-title">${p.name}</div>
-                            <div class="card-price">Rs. ${p.price}</div>
+                            <div class="card-price">₹ ${p.price}</div>
                             <div style="display:flex; gap: 0.5rem; margin-top: 1rem;">
                                 <button class="btn btn-primary" style="flex:1" onclick="addToCart(${p.productId})">Add to Cart</button>
                                 <button class="btn btn-outline" onclick="remove(${p.productId})">Remove</button>
@@ -69,5 +85,30 @@
 
         loadWishlist();
     </script>
+    <footer class="site-footer">
+        <div class="footer-col">
+            <h4>MountEdge</h4>
+            <p>Elevate your lifestyle with premium products designed for the modern explorer.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li><a href="/wishlist.html">Wishlist</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Customer Service</h4>
+            <ul>
+                <li><a href="/orders.html">My Orders</a></li>
+                <li><a href="/profile.html">My Profile</a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2023 MountEdge E-Commerce. All Rights Reserved.
+        </div>
+    </footer>
 </body>
 </html>
+

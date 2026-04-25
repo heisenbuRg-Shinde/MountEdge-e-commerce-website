@@ -7,6 +7,7 @@ C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\sr
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\exception\GlobalExceptionHandler.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\mapper\CartMapper.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\service\ProductService.java
+C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\service\AnalyticsService.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\dto\AddressDto.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\repository\OrderItemRepository.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\repository\WishlistRepository.java
@@ -29,6 +30,7 @@ C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\sr
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\controller\OrderController.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\entity\Inventory.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\mapper\OrderMapper.java
+C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\dto\AnalyticsDto.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\repository\CategoryRepository.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\controller\CategoryController.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\repository\OrderStatusHistoryRepository.java
@@ -42,6 +44,7 @@ C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\sr
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\entity\Payment.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\controller\ProductController.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\exception\BadRequestException.java
+C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\service\ReportService.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\entity\ProductImage.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\repository\AddressRepository.java
 C:\Users\Shlok Shinde\Documents\EngineeringSY\Sem4\OOPS\CP\E-commerce-website\src\main\java\com\mountedge\ecommerce\dto\OrderDto.java
