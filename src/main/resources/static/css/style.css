@@ -83,9 +83,10 @@ nav ul {
 nav a {
     color: var(--text-main);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 700; /* Bold */
+    font-size: 1.1rem; /* Bigger */
     transition: 0.3s;
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 nav a:hover {
@@ -345,3 +346,26 @@ select option {
     border-top: 1px solid var(--glass-border);
     color: var(--text-muted);
 }
+
+/* Badges & Status */
+.badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.badge-primary { background: var(--primary); color: white; }
+.badge-outline { border: 1px solid var(--glass-border); color: var(--text-muted); }
+
+.status-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-shipped { background: #dbeafe; color: #1e40af; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-processing { background: #e0e7ff; color: #3730a3; }

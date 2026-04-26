@@ -26,10 +26,14 @@ public class AnalyticsService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final com.mountedge.ecommerce.repository.OrderStatusHistoryRepository historyRepository;
 
-    public AnalyticsService(OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    public AnalyticsService(OrderRepository orderRepository, 
+                            OrderItemRepository orderItemRepository,
+                            com.mountedge.ecommerce.repository.OrderStatusHistoryRepository historyRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.historyRepository = historyRepository;
     }
 
     @Transactional(readOnly = true)
@@ -65,6 +69,12 @@ public class AnalyticsService {
         }
         dto.setTopProductNames(productNames);
         dto.setTopProductSales(productSales);
+
+        // ─── All Products Sales Analysis (for Excel) ──────────────────────────────
+        dto.setProductSalesAnalysis(orderItemRepository.findProductSalesAnalysis(start, end));
+
+        // ─── Order Activity Audit Trail (for Excel) ───────────────────────────────
+        dto.setOrderAuditTrail(historyRepository.findFullOrderAuditTrail(start, end));
 
         // ─── Category Revenue Breakdown ───────────────────────────────────────────
         List<Object[]> categoryData = orderItemRepository.findRevenueByCategory(start, end);

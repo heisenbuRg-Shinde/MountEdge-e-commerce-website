@@ -27,6 +27,7 @@
                 <li><a href="/cart.html">Cart</a></li>
                 <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
                 <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="bulk-link" style="display:none;"><a href="/bulk-orders.html">Bulk Orders</a></li>
                 <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
                 <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
             </ul>
@@ -64,11 +65,15 @@
                 <div class="section">
                     <h3>Order Summary</h3>
                     <div id="summary-items" style="margin: 1.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;"></div>
-                    <div class="order-summary-item" style="font-weight:bold; font-size: 1.2rem;">
+                    <div class="order-summary-item" style="font-weight:bold; font-size: 1.2rem; color: var(--success); display: none;" id="summary-discount-row">
+                        <span>Bulk Discount Saved:</span>
+                        <span id="summary-discount">- ₹ 0.00</span>
+                    </div>
+                    <div class="order-summary-item" style="font-weight:bold; font-size: 1.4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
                         <span>Total:</span>
                         <span id="summary-total">₹ 0.00</span>
                     </div>
-                    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="placeOrder()">Place Order</button>
+                    <button class="btn btn-primary" id="place-btn" style="width:100%; margin-top:1rem; font-size: 1.1rem; padding: 1rem;" onclick="placeOrder()">Place Order</button>
                 </div>
             </div>
         </div>
@@ -107,18 +112,15 @@
                     return;
                 }
                 
-                let total = 0;
-                document.getElementById('summary-items').innerHTML = cart.items.map(i => {
-                    const lineTotal = i.product.price * i.quantity;
-                    total += lineTotal;
-                    return `
-                        <div class="order-summary-item">
-                            <span>${i.product.name} (x${i.quantity})</span>
-                            <span>₹ ${lineTotal.toFixed(2)}</span>
-                        </div>
-                    `;
-                }).join('');
-                document.getElementById('summary-total').textContent = `₹${total.toFixed(2)}`;
+                document.getElementById('summary-items').innerHTML = cart.items.map(i => `
+                    <div class="order-summary-item" style="align-items: center;">
+                        <span>${i.productName} (x${i.quantity})</span>
+                        <span>₹${(i.price * i.quantity).toFixed(2)}</span>
+                    </div>
+                `).join('');
+
+                document.getElementById('summary-discount-row').style.display = 'none';
+                document.getElementById('summary-total').textContent = `₹${cart.totalAmount.toFixed(2)}`;
                 
             } catch (err) {
                 utils.showError('Failed to initialize checkout');
@@ -140,8 +142,7 @@
             const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
             
             try {
-                // Checkout endpoint needs addressId and paymentMethod
-                const order = await api.post(`/orders/checkout?addressId=${selectedAddressId}&paymentMethod=${paymentMethod}`, {});
+                await api.post(`/orders/checkout?addressId=${selectedAddressId}&paymentMethod=${paymentMethod}`, {});
                 utils.showToast('Order placed successfully!');
                 setTimeout(() => {
                     window.location.href = '/orders.html';

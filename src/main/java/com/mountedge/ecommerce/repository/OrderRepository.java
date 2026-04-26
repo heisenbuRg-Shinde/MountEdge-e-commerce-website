@@ -29,4 +29,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         """, nativeQuery = true)
     List<Object[]> findMonthlyRevenueAndOrders(@Param("start") String start,
                                                @Param("end") String end);
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o")
+    java.math.BigDecimal sumTotalAmount();
 }

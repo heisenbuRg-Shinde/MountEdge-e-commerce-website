@@ -3,6 +3,9 @@ package com.mountedge.ecommerce.entity;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import com.mountedge.ecommerce.entity.Order;
+import com.mountedge.ecommerce.entity.Cart;
+import com.mountedge.ecommerce.entity.Review;
 
 @Entity
 @Table(name = "users")
@@ -29,6 +32,15 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Wishlist wishlist;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Cart cart;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     // Default constructor
     public User() {
@@ -105,4 +117,13 @@ public class User {
             wishlist.setUser(this);
         }
     }
+
+    public List<Order> getOrders() { return orders; }
+    public void setOrders(List<Order> orders) { this.orders = orders; }
+
+    public Cart getCart() { return cart; }
+    public void setCart(Cart cart) { this.cart = cart; }
+
+    public List<Review> getReviews() { return reviews; }
+    public void setReviews(List<Review> reviews) { this.reviews = reviews; }
 }

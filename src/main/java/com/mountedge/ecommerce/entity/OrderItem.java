@@ -25,14 +25,18 @@ public class OrderItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column(name = "original_price", precision = 10, scale = 2)
+    private BigDecimal originalPrice;
+
     public OrderItem() {
     }
 
-    public OrderItem(Order order, Product product, Integer quantity, BigDecimal price) {
+    public OrderItem(Order order, Product product, Integer quantity, BigDecimal price, BigDecimal originalPrice) {
         this.order = order;
         this.product = product;
         this.quantity = quantity;
         this.price = price;
+        this.originalPrice = originalPrice;
     }
 
     public Long getOrderItemId() {
@@ -73,5 +77,13 @@ public class OrderItem {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 }

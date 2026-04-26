@@ -66,6 +66,8 @@ public class ReportService {
             buildDetailedSalesSheet(workbook, start, end, headerStyle, currencyStyle, dateStyle, altRowStyle);
             buildMonthlySheet(workbook, data, headerStyle, currencyStyle);
             buildTopProductsSheet(workbook, data, headerStyle);
+            buildProductAnalysisSheet(workbook, data, headerStyle, currencyStyle);
+            buildAuditSheet(workbook, data, headerStyle, dateStyle);
             buildCategorySheet(workbook, data, headerStyle, currencyStyle);
             buildUsersSheet(workbook, headerStyle, altRowStyle);
 
@@ -136,8 +138,12 @@ public class ReportService {
         sheet.setColumnWidth(8, 5500);   // Line Total
         sheet.setColumnWidth(9, 5500);   // Payment
         sheet.setColumnWidth(10, 4500);  // Status
+        sheet.setColumnWidth(11, 3500);  // Bulk?
+        sheet.setColumnWidth(12, 3500);  // Disc %
+        sheet.setColumnWidth(13, 4000);  // Disc Amt
+        sheet.setColumnWidth(14, 12000); // Shipping Address
 
-        String[] headers = {"Order ID", "Date", "Customer", "Email", "Product", "Category", "Qty", "Unit Price (₹)", "Line Total (₹)", "Payment", "Status"};
+        String[] headers = {"Order ID", "Date", "Customer", "Email", "Product", "Category", "Qty", "Unit Price (₹)", "Line Total (₹)", "Payment", "Status", "Bulk Order?", "Discount %", "Discount Amount (₹)", "Shipping Address"};
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < headers.length; i++) {
             createHeaderCell(headerRow, i, headers[i], headerStyle);
@@ -160,6 +166,10 @@ public class ReportService {
             setNumericCell(row, 8, r[8], currencyStyle);  // lineTotal
             setCell(row, 9, r[9], rowStyle);       // paymentMethod
             setCell(row, 10, r[10], rowStyle);     // status
+            setCell(row, 11, Boolean.TRUE.equals(r[11]) ? "YES" : "NO", rowStyle); // isBulkOrder
+            setNumericCell(row, 12, r[12], null);  // discountPct
+            setNumericCell(row, 13, r[13], currencyStyle); // discountAmt
+            setCell(row, 14, r[14], rowStyle);     // shippingAddress
         }
 
         // Freeze header row
@@ -216,6 +226,70 @@ public class ReportService {
             row.createCell(1).setCellValue(names.get(i));
             row.createCell(2).setCellValue(sales.get(i));
         }
+    }
+
+    // ─── Sheet 4B: Comprehensive Product Sales Analysis ───────────────────────
+    private void buildProductAnalysisSheet(XSSFWorkbook wb, AnalyticsDto data,
+                                           CellStyle headerStyle, CellStyle currencyStyle) {
+        Sheet sheet = wb.createSheet("Product Sales Analysis");
+        sheet.setColumnWidth(0, 3000);   // ID
+        sheet.setColumnWidth(1, 10000);  // Name
+        sheet.setColumnWidth(2, 6000);   // Category
+        sheet.setColumnWidth(3, 4000);   // Units Sold
+        sheet.setColumnWidth(4, 6000);   // Revenue
+
+        String[] headers = {"Product ID", "Product Name", "Category", "Units Sold", "Total Revenue (₹)"};
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            createHeaderCell(headerRow, i, headers[i], headerStyle);
+        }
+
+        List<Object[]> analysis = data.getProductSalesAnalysis();
+        if (analysis != null) {
+            for (int i = 0; i < analysis.size(); i++) {
+                Object[] r = analysis.get(i);
+                Row row = sheet.createRow(i + 1);
+                setCell(row, 0, r[0], null);                 // productId
+                setCell(row, 1, r[1], null);                 // productName
+                setCell(row, 2, r[2], null);                 // categoryName
+                setCell(row, 3, r[3], null);                 // totalSold
+                setNumericCell(row, 4, r[4], currencyStyle); // totalRevenue
+            }
+        }
+        sheet.createFreezePane(0, 1);
+        sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, headers.length - 1));
+    }
+
+    // ─── Sheet 7: Order Activity Audit Trail ──────────────────────────────────
+    private void buildAuditSheet(XSSFWorkbook wb, AnalyticsDto data,
+                                 CellStyle headerStyle, CellStyle dateStyle) {
+        Sheet sheet = wb.createSheet("Order Activity Audit");
+        sheet.setColumnWidth(0, 3500);   // Order ID
+        sheet.setColumnWidth(1, 6000);   // Customer
+        sheet.setColumnWidth(2, 5000);   // Status
+        sheet.setColumnWidth(3, 7000);   // Timestamp
+        sheet.setColumnWidth(4, 12000);  // Admin Notes / Activity Details
+
+        String[] headers = {"Order ID", "Customer", "New Status", "Timestamp", "Activity Details / Notes"};
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            createHeaderCell(headerRow, i, headers[i], headerStyle);
+        }
+
+        List<Object[]> audit = data.getOrderAuditTrail();
+        if (audit != null) {
+            for (int i = 0; i < audit.size(); i++) {
+                Object[] r = audit.get(i);
+                Row row = sheet.createRow(i + 1);
+                setCell(row, 0, r[0], null);           // orderId
+                setCell(row, 1, r[4], null);           // customerName
+                setCell(row, 2, r[1], null);           // status
+                setCell(row, 3, r[2], dateStyle);      // timestamp
+                setCell(row, 4, r[3], null);           // notes
+            }
+        }
+        sheet.createFreezePane(0, 1);
+        sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, headers.length - 1));
     }
 
     // ─── Sheet 5: Category Sales ──────────────────────────────────────────────

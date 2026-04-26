@@ -38,9 +38,13 @@ const api = {
             const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
             throw err;
         }
-        // Handle empty responses
+        // Handle empty or non-JSON responses
         const text = await response.text();
-        return text ? JSON.parse(text) : {};
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            return { message: text };
+        }
     },
 
     async post(endpoint, data) {
@@ -64,7 +68,11 @@ const api = {
             throw err;
         }
         const text = await response.text();
-        return text ? JSON.parse(text) : {};
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            return { message: text };
+        }
     },
 
     async put(endpoint, data) {
@@ -82,7 +90,11 @@ const api = {
             throw err;
         }
         const text = await response.text();
-        return text ? JSON.parse(text) : {};
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            return { message: text };
+        }
     },
 
     async delete(endpoint) {
@@ -98,7 +110,33 @@ const api = {
             throw err;
         }
         const text = await response.text();
-        return text ? JSON.parse(text) : {};
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            return { message: text };
+        }
+    },
+
+    async patch(endpoint, data) {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${BASE_URL}${endpoint}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({error: 'Network response was not ok'}));
+            throw err;
+        }
+        const text = await response.text();
+        try {
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            return { message: text };
+        }
     }
 };
 
@@ -137,11 +175,13 @@ function updateUI() {
         `;
         const wl = document.getElementById('wishlist-link');
         const ol = document.getElementById('orders-link');
+        const bl = document.getElementById('bulk-link');
         const pl = document.getElementById('profile-link');
         const al = document.getElementById('admin-link');
         
         if (wl) wl.style.display = 'inline-block';
         if (ol) ol.style.display = 'inline-block';
+        if (bl) bl.style.display = 'inline-block';
         if (pl) pl.style.display = 'inline-block';
         
         if (user.role === 'ROLE_ADMIN' && al) {

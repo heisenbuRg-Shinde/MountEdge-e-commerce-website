@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.mountedge.ecommerce.entity.Payment;
 
 @Entity
 @Table(name = "orders")
@@ -41,6 +42,18 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
+
+    @Column(name = "is_bulk_order", columnDefinition = "TINYINT(1) DEFAULT 0")
+    private Boolean isBulkOrder = false;
+
+    @Column(name = "discount_percentage", precision = 5, scale = 2)
+    private BigDecimal discountPercentage = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @PrePersist
     protected void onCreate() {
@@ -139,4 +152,16 @@ public class Order {
         statusHistory.add(history);
         history.setOrder(this);
     }
+
+    public Payment getPayment() { return payment; }
+    public void setPayment(Payment payment) { this.payment = payment; }
+
+    public Boolean getIsBulkOrder() { return isBulkOrder; }
+    public void setIsBulkOrder(Boolean isBulkOrder) { this.isBulkOrder = isBulkOrder; }
+
+    public BigDecimal getDiscountPercentage() { return discountPercentage; }
+    public void setDiscountPercentage(BigDecimal discountPercentage) { this.discountPercentage = discountPercentage; }
+
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
 }

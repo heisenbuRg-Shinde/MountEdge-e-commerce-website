@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-dark: #1e1b4b;
+            --invoice-gray: #f8fafc;
+        }
+        body { background: white; color: #1e293b; font-family: 'Inter', system-ui, sans-serif; }
+        .invoice-container { max-width: 800px; margin: 2rem auto; padding: 3rem; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--primary); padding-bottom: 2rem; margin-bottom: 2rem; }
+        .brand { display: flex; align-items: center; gap: 0.5rem; color: var(--primary-dark); }
+        .brand img { width: 40px; height: 40px; }
+        .brand span { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; }
+        .invoice-title { text-align: right; }
+        .invoice-title h1 { margin: 0; font-size: 2.5rem; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.1em; }
+        .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; }
+        .detail-group h4 { text-transform: uppercase; font-size: 0.75rem; color: #64748b; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .detail-group p { font-weight: 500; line-height: 1.5; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 3rem; }
+        .items-table th { text-align: left; background: var(--invoice-gray); padding: 1rem; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; font-size: 0.75rem; color: #64748b; }
+        .items-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; }
+        .item-name { font-weight: 600; color: var(--primary-dark); }
+        .totals-section { margin-left: auto; width: 300px; }
+        .total-row { display: flex; justify-content: space-between; padding: 0.75rem 0; }
+        .total-row.grand-total { border-top: 2px solid #e2e8f0; margin-top: 0.5rem; padding-top: 1rem; font-size: 1.25rem; font-weight: 800; color: var(--primary); }
+        .print-btn-container { max-width: 800px; margin: 0 auto 2rem; display: flex; gap: 1rem; justify-content: flex-end; }
+        
+        @media print {
+            .print-btn-container, header, footer { display: none !important; }
+            .invoice-container { border: none; box-shadow: none; margin: 0; padding: 0; width: 100%; max-width: none; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-btn-container animate-fade" style="margin-top: 2rem;">
+        <button class="btn btn-outline" onclick="window.history.back()">← Back</button>
+        <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <div class="invoice-container animate-fade" id="invoice-content">
+        <div class="loader" id="loader"></div>
+        <div id="invoice-body" style="display: none;">
+            <div class="invoice-header">
+                <div class="brand">
+                    <img src="/images/logo.png" alt="Logo">
+                    <span>MountEdge</span>
+                </div>
+                <div class="invoice-title">
+                    <h1>Invoice</h1>
+                    <p style="color: #64748b;">#<span id="order-id"></span></p>
+                </div>
+            </div>
+
+            <div class="invoice-details">
+                <div class="detail-group">
+                    <h4>Billed To</h4>
+                    <p id="customer-name"></p>
+                    <p id="customer-email" style="font-weight: 400; color: #64748b;"></p>
+                </div>
+                <div class="detail-group" style="text-align: right;">
+                    <h4>Shipping Address</h4>
+                    <p id="shipping-address"></p>
+                </div>
+                <div class="detail-group">
+                    <h4>Date Issued</h4>
+                    <p id="order-date"></p>
+                </div>
+                <div class="detail-group" style="text-align: right;">
+                    <h4>Payment Method</h4>
+                    <p id="payment-method"></p>
+                </div>
+            </div>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="items-list"></tbody>
+            </table>
+
+            <div class="totals-section">
+                <div class="total-row" id="subtotal-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal"></span>
+                </div>
+                <div class="total-row" id="discount-row" style="color: var(--success); display: none;">
+                    <span>Bulk Discount</span>
+                    <span id="discount"></span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Amount Due</span>
+                    <span id="grand-total"></span>
+                </div>
+            </div>
+
+            <div style="margin-top: 4rem; border-top: 1px solid #f1f5f9; padding-top: 2rem; color: #94a3b8; font-size: 0.875rem;">
+                <p>Thank you for shopping with MountEdge. If you have any questions about this invoice, please contact support@mountedge.com</p>
+                <p style="margin-top: 0.5rem;">&copy; 2024 MountEdge E-Commerce. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        async function loadInvoice() {
+            if (!orderId) {
+                window.location.href = '/orders.html';
+                return;
+            }
+
+            try {
+                const order = await api.get(`/orders/${orderId}`);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('invoice-body').style.display = 'block';
+
+                document.getElementById('order-id').textContent = order.orderId;
+                document.getElementById('customer-name').textContent = order.customerName;
+                document.getElementById('customer-email').textContent = order.customerEmail;
+                document.getElementById('shipping-address').textContent = order.shippingAddress;
+                document.getElementById('order-date').textContent = new Date(order.createdAt).toLocaleDateString('en-IN', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                document.getElementById('payment-method').textContent = order.paymentMethod;
+
+                let subtotal = 0;
+                document.getElementById('items-list').innerHTML = order.items.map(item => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += item.originalPrice * item.quantity;
+                    return `
+                        <tr>
+                            <td>
+                                <div class="item-name">${item.productName}</div>
+                                ${order.isBulkOrder ? `<small style="color:#64748b">Wholesale Price Applied</small>` : ''}
+                            </td>
+                            <td style="text-align: center;">${item.quantity}</td>
+                            <td style="text-align: right;">₹${item.price.toFixed(2)}</td>
+                            <td style="text-align: right;">₹${itemTotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                if (order.isBulkOrder && order.discountAmount > 0) {
+                    document.getElementById('discount-row').style.display = 'flex';
+                    document.getElementById('discount').textContent = `- ₹${order.discountAmount.toFixed(2)}`;
+                    document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+                } else {
+                    document.getElementById('subtotal-row').style.display = 'none';
+                }
+
+                document.getElementById('grand-total').textContent = `₹${order.totalAmount.toFixed(2)}`;
+
+            } catch (err) {
+                utils.showError('Failed to load invoice details');
+            }
+        }
+
+        loadInvoice();
+    </script>
+</body>
+</html>

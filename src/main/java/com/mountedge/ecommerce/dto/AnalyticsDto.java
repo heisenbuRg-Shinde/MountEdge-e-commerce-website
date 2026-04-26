@@ -28,6 +28,10 @@ public class AnalyticsDto {
     private long totalOrders;
     private long totalProductsSold;
     private BigDecimal averageOrderValue;
+    
+    // For Excel Analysis Report
+    private List<Object[]> productSalesAnalysis;
+    private List<Object[]> orderAuditTrail;
 
     public AnalyticsDto() {}
 
@@ -65,4 +69,10 @@ public class AnalyticsDto {
 
     public BigDecimal getAverageOrderValue() { return averageOrderValue; }
     public void setAverageOrderValue(BigDecimal averageOrderValue) { this.averageOrderValue = averageOrderValue; }
+
+    public List<Object[]> getProductSalesAnalysis() { return productSalesAnalysis; }
+    public void setProductSalesAnalysis(List<Object[]> productSalesAnalysis) { this.productSalesAnalysis = productSalesAnalysis; }
+
+    public List<Object[]> getOrderAuditTrail() { return orderAuditTrail; }
+    public void setOrderAuditTrail(List<Object[]> orderAuditTrail) { this.orderAuditTrail = orderAuditTrail; }
 }

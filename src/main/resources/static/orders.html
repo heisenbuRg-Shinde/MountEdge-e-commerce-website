@@ -29,6 +29,7 @@
                 <li><a href="/cart.html">Cart</a></li>
                 <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
                 <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="bulk-link" style="display:none;"><a href="/bulk-orders.html">Bulk Orders</a></li>
                 <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
                 <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
             </ul>
@@ -64,17 +65,21 @@
 
                 document.getElementById('orders-list').innerHTML = orders.map(o => {
                     const date = new Date(o.createdAt).toLocaleDateString();
+                    const bulkBadge = o.isBulkOrder ? '<span style="background:var(--success);color:white;padding:0.2rem 0.5rem;border-radius:12px;font-size:0.7rem;margin-left:0.5rem;">BULK DISCOUNT</span>' : '';
                     return `
                         <div class="order-card">
                             <div class="order-header">
                                 <div>
-                                    <div style="color:var(--text-muted); font-size:0.9rem;">Order ID: #${o.orderId}</div>
+                                    <div style="color:var(--text-muted); font-size:0.9rem;">Order ID: #${o.orderId} ${bulkBadge}</div>
                                     <div style="font-size:0.9rem;">Placed on ${date}</div>
                                 </div>
                                 <div style="text-align:right;">
                                     <div style="font-weight:bold; font-size:1.2rem;">₹ ${o.totalAmount.toFixed(2)}</div>
                                     <div class="status-badge status-${o.status}">${o.status}</div>
-                                    <button class="btn btn-outline" style="margin-top:0.5rem; padding: 0.4rem 0.8rem; font-size:0.8rem;" onclick="window.location.href='/order-tracking.html?id=${o.orderId}'">Track Order</button>
+                                    <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+                                        <button class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size:0.8rem;" onclick="window.location.href='/order-tracking.html?id=${o.orderId}'">Track Order</button>
+                                        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size:0.8rem; background:#475569; border-color:#475569;" onclick="window.location.href='/invoice.html?id=${o.orderId}'">📄 Invoice</button>
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -90,6 +95,7 @@
         }
 
         loadOrders();
+    </script>
     </script>
     <footer class="site-footer">
         <div class="footer-col">

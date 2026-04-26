@@ -10,7 +10,7 @@
     <style>
         /* ── Tab Navigation ── */
         .admin-tabs { display:flex; gap:0.5rem; margin-bottom:2rem; border-bottom:2px solid var(--glass-border); padding-bottom:0; }
-        .tab-btn { background:none; border:none; padding:0.75rem 1.5rem; font-size:1rem; font-weight:600; color:var(--text-muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.2s; }
+        .tab-btn { background:none; border:none; padding:0.75rem 1.5rem; font-size:1.1rem; font-weight:700; color:var(--text-muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.2s; }
         .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
         .tab-btn:hover { color:var(--primary); }
         .tab-pane { display:none; }
@@ -57,6 +57,7 @@
                 <li><a href="/cart.html">Cart</a></li>
                 <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
                 <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="bulk-link" style="display:none;"><a href="/bulk-orders.html">Bulk Orders</a></li>
                 <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
                 <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
             </ul>
@@ -75,6 +76,7 @@
             <button class="tab-btn" onclick="switchTab('analytics', this)">📈 Analytics</button>
             <button class="tab-btn" onclick="switchTab('products', this)">📦 Products</button>
             <button class="tab-btn" onclick="switchTab('users', this)">👥 Users</button>
+            <button class="tab-btn" onclick="switchTab('bulk', this)">🏷️ Bulk Orders</button>
         </div>
 
         <!-- ═══════════════ TAB 1: DASHBOARD ═══════════════ -->
@@ -157,6 +159,40 @@
                 </table>
             </div>
         </div>
+        <!-- ═══════════════ TAB 4: USERS ═══════════════ -->
+        <div id="tab-users" class="tab-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3>User Management</h3>
+            </div>
+            <div style="background:var(--bg-card); border-radius:12px; border:1px solid var(--glass-border); overflow:hidden;">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══════════════ TAB 5: BULK ORDERS ═══════════════ -->
+        <div id="tab-bulk" class="tab-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3>Bulk Orders</h3>
+            </div>
+            <div style="background:var(--bg-card); border-radius:12px; border:1px solid var(--glass-border); overflow:hidden;">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th><th>User</th><th>Items</th><th>Original Total</th><th>Discount</th><th>Final Total</th><th>Status</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bulk-order-list"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <!-- ════ Add/Edit Product Modal ════ -->
@@ -203,6 +239,61 @@
         </div>
     </div>
 
+    <!-- ════ Delete User Confirmation Modal ════ -->
+    <div id="delete-user-modal" style="display:none; background:rgba(0,0,0,0.85); position:fixed; top:0; left:0; width:100%; height:100%; z-index:1002; align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:var(--bg-card); padding:2rem; border-radius:12px; max-width:400px; width:100%; border:1px solid var(--glass-border); text-align:center;">
+            <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
+            <h3 style="margin-bottom:0.5rem;">Delete User?</h3>
+            <p style="margin-bottom:2rem; opacity:0.7;">This will permanently remove the user and all their data (orders, addresses, cart). This cannot be undone.</p>
+            <input type="hidden" id="delete-user-id">
+            <div style="display:flex; gap:1rem;">
+                <button class="btn btn-primary" id="btn-confirm-delete-user" style="flex:1; background:#e74c3c; border-color:#e74c3c;" onclick="confirmDeleteUser()">Delete User</button>
+                <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('delete-user-modal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ User Details Modal ════ -->
+    <div id="user-details-modal" style="display:none; background:rgba(0,0,0,0.8); position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; overflow-y:auto; padding:3rem 1rem;">
+        <div style="background:var(--bg-card); padding:2rem; border-radius:12px; max-width:800px; width:100%; border:1px solid var(--glass-border); margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3>User Profile & History</h3>
+                <button class="btn btn-outline" onclick="closeUserModal()" style="padding:0.4rem 0.8rem;">&times; Close</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:2rem; padding:1.5rem; background:var(--bg-main); border-radius:12px; border:1px solid var(--glass-border);">
+                <div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Name</div>
+                    <div id="u-detail-name" style="font-weight:600; font-size:1.1rem;">-</div>
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Email</div>
+                    <div id="u-detail-email">-</div>
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Role</div>
+                    <div id="u-detail-role">-</div>
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem;">Total Spent</div>
+                    <div id="u-detail-spent" style="color:var(--primary); font-weight:700;">₹ 0</div>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom:1rem; color:var(--text-muted);">Recent Orders</h4>
+            <div style="background:var(--bg-main); border-radius:12px; border:1px solid var(--glass-border); overflow:hidden;">
+                <table class="product-table" style="font-size:0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="u-detail-orders"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/api.js"></script>
     <script>
         // ── Auth Guard ──────────────────────────────────────────────────────────
@@ -219,8 +310,11 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
             btn.classList.add('active');
+            if (name === 'dashboard') loadStats();
             if (name === 'analytics' && !chartRevenue) loadAnalytics();
             if (name === 'products') loadProducts();
+            if (name === 'users') loadUsers();
+            if (name === 'bulk') loadBulkOrders();
         }
 
         // ── Dashboard Stats ─────────────────────────────────────────────────────
@@ -465,6 +559,129 @@
                 closeModal(); loadProducts(); loadStats();
             } catch (err) { utils.showError(err.message || 'Error saving product'); }
             finally { btn.textContent = 'Save Product'; btn.disabled = false; }
+        }
+
+        // ── Users ───────────────────────────────────────────────────────────────
+        async function loadUsers() {
+            try {
+                const users = await api.get('/admin/users');
+                document.getElementById('user-list').innerHTML = users.map(u => `
+                    <tr style="cursor:pointer;" onclick="viewUserDetails(${u.userId})">
+                        <td>${u.userId}</td>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td><span class="badge ${u.role === 'ROLE_ADMIN' ? 'badge-primary' : 'badge-outline'}">${u.role}</span></td>
+                        <td>
+                            <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-right:0.5rem;" onclick="event.stopPropagation(); toggleRole(${u.userId}, '${u.role}')">Toggle Role</button>
+                            <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.8rem; color:#e74c3c; border-color:#e74c3c;" onclick="event.stopPropagation(); deleteUser(${u.userId})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { utils.showError('Failed to load users'); }
+        }
+
+        async function viewUserDetails(id) {
+            try {
+                const u = await api.get(`/admin/users/${id}`);
+                document.getElementById('u-detail-name').textContent = u.name;
+                document.getElementById('u-detail-email').textContent = u.email;
+                document.getElementById('u-detail-role').textContent = u.role;
+                document.getElementById('u-detail-spent').textContent = '₹ ' + (u.totalSpent || 0).toLocaleString('en-IN', {minimumFractionDigits:2});
+                
+                document.getElementById('u-detail-orders').innerHTML = u.recentOrders.length ? u.recentOrders.map(o => `
+                    <tr>
+                        <td>#${o.orderId}</td>
+                        <td>${new Date(o.createdAt).toLocaleDateString()}</td>
+                        <td>${o.itemCount} items</td>
+                        <td>₹ ${o.totalAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <span class="status-badge status-${o.status.toLowerCase()}">${o.status}</span>
+                                <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.7rem; background:#475569; border-color:#475569; color:white;" onclick="window.open('/invoice.html?id=${o.orderId}', '_blank')">📄 Invoice</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align:center; padding:2rem;">No orders yet</td></tr>';
+
+                document.getElementById('user-details-modal').style.display = 'block';
+            } catch (err) { utils.showError('Failed to load user details'); }
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-details-modal').style.display = 'none';
+        }
+
+        async function toggleRole(userId, currentRole) {
+            const newRole = currentRole === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
+            try {
+                await api.put(`/admin/users/${userId}/role`, { role: newRole });
+                utils.showToast(`Role updated to ${newRole}`);
+                loadUsers();
+            } catch (err) { utils.showError('Failed to update role'); }
+        }
+
+        function deleteUser(userId) {
+            document.getElementById('delete-user-id').value = userId;
+            document.getElementById('delete-user-modal').style.display = 'flex';
+        }
+
+        async function confirmDeleteUser() {
+            const userId = document.getElementById('delete-user-id').value;
+            const btn = document.getElementById('btn-confirm-delete-user');
+            btn.textContent = 'Deleting...';
+            btn.disabled = true;
+            try {
+                await api.delete(`/admin/users/${userId}`);
+                document.getElementById('delete-user-modal').style.display = 'none';
+                utils.showToast('User deleted successfully');
+                loadUsers();
+                loadStats();
+            } catch (err) {
+                utils.showError(err.message || err.error || 'Failed to delete user');
+            } finally {
+                btn.textContent = 'Delete User';
+                btn.disabled = false;
+            }
+        }
+
+        // ── Bulk & Scheduled Orders ──────────────────────────────────────────────────
+        async function loadBulkOrders() {
+            try {
+                const bulkOrders = await api.get('/admin/orders/bulk');
+                document.getElementById('bulk-order-list').innerHTML = bulkOrders.map(o => {
+                    let actions = '';
+                    if (o.status === 'PENDING_APPROVAL') {
+                        actions = `<button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.8rem; margin-right:0.5rem; border-color:var(--success); color:var(--success);" onclick="updateBulkStatus(${o.orderId}, 'approve')">Approve</button>
+                                   <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.8rem; border-color:#e74c3c; color:#e74c3c;" onclick="updateBulkStatus(${o.orderId}, 'reject')">Reject</button>`;
+                    }
+                    return `
+                    <tr>
+                        <td>#${o.orderId}</td>
+                        <td>${o.userName}<br><small style="color:var(--text-muted)">${o.userEmail}</small></td>
+                        <td>${o.totalItems}</td>
+                        <td style="text-decoration:line-through; color:var(--text-muted);">₹ ${o.originalTotal.toFixed(2)}</td>
+                        <td style="color:var(--success); font-weight:bold;">- ₹ ${o.discountAmount.toFixed(2)}</td>
+                        <td style="font-weight:bold;">₹ ${o.finalTotal.toFixed(2)}</td>
+                        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+                        <td>
+                            <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+                                ${actions}
+                                <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.8rem; background:#475569; border-color:#475569; color:white;" onclick="window.open('/invoice.html?id=${o.orderId}', '_blank')">📄 Invoice</button>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+                if (bulkOrders.length === 0) document.getElementById('bulk-order-list').innerHTML = '<tr><td colspan="8" style="text-align:center;">No bulk orders found.</td></tr>';
+            } catch (err) { utils.showError('Failed to load bulk orders'); }
+        }
+
+        async function updateBulkStatus(id, action) {
+            try {
+                await api.patch(`/admin/orders/bulk/${id}/${action}`, {});
+                utils.showToast(`Bulk order ${action}d successfully`);
+                loadBulkOrders();
+            } catch (err) { utils.showError(`Failed to ${action} bulk order`); }
         }
 
         // ── Init ─────────────────────────────────────────────────────────────────

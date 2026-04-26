@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Orders | MountEdge</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .bulk-card { background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .bulk-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .status-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .status-PENDING_APPROVAL { background: #f59e0b; color: white; }
+        .status-CONFIRMED { background: #10b981; color: white; }
+        .status-REJECTED { background: #ef4444; color: white; }
+        
+        .request-form { display: grid; grid-template-columns: 1fr; gap: 1.5rem; background: var(--bg-main); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border); }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { font-weight: 600; font-size: 0.9rem; color: var(--text-muted); }
+        
+        .preview-box { background: rgba(16, 185, 129, 0.1); border: 1px dashed var(--success); padding: 1.5rem; border-radius: 8px; margin-top: 1rem; display: none; }
+    </style>
+    <link rel="icon" href="/images/logo.png">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">
+            <img src="/images/logo.png" alt="Logo">
+            <span>MountEdge</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li id="wishlist-link" style="display:none;"><a href="/wishlist.html">Wishlist</a></li>
+                <li id="orders-link" style="display:none;"><a href="/orders.html">Orders</a></li>
+                <li id="bulk-link" style="display:none;"><a href="/bulk-orders.html">Bulk Orders</a></li>
+                <li id="bulk-link" style="display:none;"><a href="/bulk-orders.html" style="color:var(--primary);font-weight:bold;">Bulk Orders</a></li>
+                <li id="profile-link" style="display:none;"><a href="/profile.html">Profile</a></li>
+                <li id="admin-link" style="display:none;"><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons" id="auth-section"></div>
+    </header>
+
+    <div class="container animate-fade">
+        <h2 style="margin-bottom: 1rem;">Wholesale & Bulk Orders</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Request wholesale quantities of our premium products at discounted rates. All requests require admin approval.</p>
+
+        <!-- New Request Form -->
+        <div class="request-form">
+            <h3 style="margin-bottom: 1rem;">Request New Bulk Order</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="form-group">
+                    <label>Select Product</label>
+                    <select id="b-product" class="form-control" onchange="debouncedPreview()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity (Min. 5)</label>
+                    <input type="number" id="b-quantity" class="form-control" value="5" min="5" oninput="debouncedPreview()">
+                </div>
+                <div class="form-group">
+                    <label>Shipping Address</label>
+                    <select id="b-address" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="b-payment" class="form-control">
+                        <option value="COD">Cash on Delivery / Invoice</option>
+                        <option value="ONLINE">Online Payment</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Live Preview Box -->
+            <div id="preview-box" class="preview-box">
+                <h4 style="color: var(--success); margin-bottom: 1rem;">Discount Preview</h4>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Original Price:</span> <span id="prev-original" style="text-decoration: line-through; color: var(--text-muted);">₹ 0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--success);">
+                    <span>Wholesale Discount (<span id="prev-pct">0</span>%):</span> <span id="prev-discount">- ₹ 0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-top: 1rem; border-top: 1px solid var(--success); padding-top: 1rem;">
+                    <span>Final Wholesale Price:</span> <span id="prev-final">₹ 0.00</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="btn-submit" onclick="submitBulkRequest()" style="margin-top: 1rem; width: 100%; max-width: 300px;">Submit Request for Approval</button>
+        </div>
+
+        <!-- Order History -->
+        <h3 style="margin-top: 3rem; margin-bottom: 1.5rem;">My Bulk Order Requests</h3>
+        <div id="loading" class="loader"></div>
+        <div id="bulk-orders-list"></div>
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <h3>You have no bulk order requests yet.</h3>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        if (!auth.isAuthenticated()) window.location.href = '/login.html';
+
+        let previewTimeout = null;
+
+        async function initPage() {
+            try {
+                // Load products
+                const prods = await api.get('/products?size=100');
+                document.getElementById('b-product').innerHTML = '<option value="">-- Choose Product --</option>' + 
+                    prods.content.map(p => `<option value="${p.productId}">${p.name} (₹${p.price})</option>`).join('');
+
+                // Load addresses
+                const addresses = await api.get('/addresses');
+                document.getElementById('b-address').innerHTML = '<option value="">-- Choose Address --</option>' + 
+                    addresses.map(a => `<option value="${a.addressId}">${a.addressLine1}, ${a.city} ${a.default ? '(Default)' : ''}</option>`).join('');
+
+                // Load history
+                loadHistory();
+
+            } catch (err) {
+                utils.showError('Failed to initialize page');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const orders = await api.get('/orders/my-bulk-orders');
+                document.getElementById('loading').style.display = 'none';
+
+                if (!orders || orders.length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.getElementById('bulk-orders-list').innerHTML = '';
+                    return;
+                }
+
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('bulk-orders-list').innerHTML = orders.map(o => {
+                    const date = new Date(o.createdAt).toLocaleDateString();
+                    return `
+                        <div class="bulk-card">
+                            <div class="bulk-header">
+                                <div>
+                                    <div style="color:var(--text-muted); font-size:0.9rem;">Request ID: #${o.orderId}</div>
+                                    <div style="font-size:0.9rem;">Requested on ${date}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:bold; font-size:1.2rem;">₹ ${o.totalAmount.toFixed(2)}</div>
+                                    <div class="status-badge status-${o.status}">${o.status}</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                <p><strong>Items:</strong> ${o.itemCount}</p>
+                                ${o.discountAmount > 0 ? `<p style="color:var(--success)"><strong>Discount Saved:</strong> ₹ ${o.discountAmount.toFixed(2)}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                utils.showError('Failed to load bulk order history');
+            }
+        }
+
+        function debouncedPreview() {
+            clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(getPreview, 500);
+        }
+
+        async function getPreview() {
+            const productId = document.getElementById('b-product').value;
+            const quantity = document.getElementById('b-quantity').value;
+
+            if (!productId || quantity < 5) {
+                document.getElementById('preview-box').style.display = 'none';
+                return;
+            }
+
+            try {
+                const preview = await api.get(`/orders/bulk-preview?productId=${productId}&quantity=${quantity}`);
+                document.getElementById('prev-original').textContent = `₹ ${preview.totalOriginal.toFixed(2)}`;
+                document.getElementById('prev-pct').textContent = preview.discountPct;
+                document.getElementById('prev-discount').textContent = `- ₹ ${preview.totalDiscount.toFixed(2)}`;
+                document.getElementById('prev-final').textContent = `₹ ${preview.finalTotal.toFixed(2)}`;
+                document.getElementById('preview-box').style.display = 'block';
+            } catch (err) {
+                document.getElementById('preview-box').style.display = 'none';
+            }
+        }
+
+        async function submitBulkRequest() {
+            const productId = document.getElementById('b-product').value;
+            const quantity = document.getElementById('b-quantity').value;
+            const addressId = document.getElementById('b-address').value;
+            const paymentMethod = document.getElementById('b-payment').value;
+
+            if (!productId || !addressId) {
+                utils.showError("Please select a product and shipping address.");
+                return;
+            }
+            if (quantity < 5) {
+                utils.showError("Bulk orders require a minimum quantity of 5.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                await api.post(`/orders/bulk-request?productId=${productId}&quantity=${quantity}&addressId=${addressId}&paymentMethod=${paymentMethod}`, {});
+                utils.showToast("Bulk order requested successfully!");
+                document.getElementById('b-product').value = '';
+                document.getElementById('b-quantity').value = '5';
+                document.getElementById('preview-box').style.display = 'none';
+                loadHistory();
+            } catch (err) {
+                utils.showError(err.message || 'Failed to submit request');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Request for Approval';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (auth.isAuthenticated()) {
+                document.getElementById('bulk-link').style.display = 'block';
+                document.getElementById('subscriptions-link').style.display = 'block';
+            }
+        });
+
+        initPage();
+    </script>
+    <footer class="site-footer">
+        <div class="footer-col">
+            <h4>MountEdge</h4>
+            <p>Elevate your lifestyle with premium products designed for the modern explorer.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/cart.html">Cart</a></li>
+                <li><a href="/wishlist.html">Wishlist</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Customer Service</h4>
+            <ul>
+                <li><a href="/orders.html">My Orders</a></li>
+                <li><a href="/profile.html">My Profile</a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2023 MountEdge E-Commerce. All Rights Reserved.
+        </div>
+    </footer>
+</body>
+</html>

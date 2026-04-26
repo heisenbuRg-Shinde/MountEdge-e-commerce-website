@@ -19,7 +19,10 @@ public class OrderMapper {
                 order.getTotalAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                itemCount
+                itemCount,
+                order.getIsBulkOrder(),
+                order.getDiscountPercentage(),
+                order.getDiscountAmount()
         );
     }
 }
