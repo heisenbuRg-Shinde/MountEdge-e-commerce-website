@@ -1,27 +1,43 @@
 # 🏔️ MountEdge E-Commerce Platform
 
+<p align="center">
+  <img src="src/main/resources/static/images/logo.png" alt="MountEdge Logo" width="200" />
+</p>
+
 ![MountEdge Banner](assets/readme/banner.png)
 
 ## 🌟 Overview
-**MountEdge** is a premium, full-stack e-commerce platform built with a robust **Java Spring Boot** backend and a sleek, modern **Vanilla HTML/CSS/JS** frontend. Designed with a focus on scalability, security, and Object-Oriented Programming (OOPS) principles, it provides a seamless shopping experience for users and a comprehensive management dashboard for administrators.
+**MountEdge** is a premium, professional-grade e-commerce ecosystem built for modern retail. It features a high-performance **Java Spring Boot** backend and a stunning **Vanilla HTML/CSS/JS** frontend. The platform is architected with strict adherence to **OOPS principles** and **DBMS best practices**, offering a scalable, secure, and feature-rich experience for both customers and administrators.
 
 ---
 
-## 🚀 Key Features
+## 🚀 New & Advanced Features
 
-### 👤 User Features
-- **Secure Authentication**: JWT-based login and registration system.
-- **Product Discovery**: Browse items by category with real-time stock availability.
-- **Persistent Cart**: Add/remove items with automatic total calculation.
-- **Order Management**: Track order history and status (Pending, Shipped, Delivered).
-- **Reviews & Ratings**: Share feedback on products with a 5-star rating system.
-- **Address Management**: Save multiple shipping addresses for faster checkout.
+### 📊 Admin Analytics & Insights
+- **Interactive Dashboards**: Dynamic visualization of revenue trends, product performance, and user activity using **Chart.js**.
+- **Real-time Stats**: Instant overview of total revenue, average order value, and stock levels.
+- **Sales Breakdown**: Monthly and categorical analysis to drive business decisions.
 
-### 🛠️ Admin Dashboard
-- **Inventory Control**: Real-time management of product stock levels.
-- **Category Management**: Organize products into logical clusters.
-- **Order Oversight**: Monitor and update the status of all customer orders.
-- **User Management**: View and manage the platform's user base.
+### 📄 Professional Reporting System
+- **Excel Export**: Generate comprehensive multi-sheet **.xlsx** reports using **Apache POI**.
+- **Audit Trails**: Detailed logs of order status changes and administrative actions.
+- **Executive Summaries**: High-level KPI reporting for stakeholders.
+
+### 📦 Order & Logistics Management
+- **Bulk Order Workflow**: Specialized system for large-scale orders with administrative approval/rejection cycles.
+- **Scheduled Orders**: Automated processing for recurring or future-dated purchases.
+- **Invoicing**: Automatic generation of professional, print-ready invoices for every transaction.
+- **Order Tracking**: Real-time status updates from "Pending" to "Delivered".
+
+### 🎨 Premium UI/UX
+- **Glassmorphism Design**: Sleek, modern aesthetic with semi-transparent elements and vibrant gradients.
+- **Responsive Layouts**: Optimized for seamless experiences across desktop, tablet, and mobile devices.
+- **Interactive Components**: Micro-animations and smooth transitions for enhanced engagement.
+
+### 🛡️ Enterprise-Grade Security
+- **JWT Authentication**: Secure, stateless session management using JSON Web Tokens.
+- **Role-Based Access (RBAC)**: Granular permissions for Users and Administrators.
+- **Password Encryption**: Industry-standard hashing for user data protection.
 
 ---
 
@@ -30,15 +46,17 @@
 <p align="left">
   <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=java&logoColor=white" />
   <img src="https://img.shields.io/badge/Spring_Boot-3.2.4-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" />
-  <img src="https://img.shields.io/badge/Hibernate-5.6.5-59666C?style=for-the-badge&logo=hibernate&logoColor=white" />
+  <img src="https://img.shields.io/badge/Apache_POI-5.2.3-D22128?style=for-the-badge&logo=apache&logoColor=white" />
+  <img src="https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
   <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white" />
 </p>
 
-- **Backend**: Spring Boot 3.2.4 (Rest API), Spring Security (JWT), Spring Data JPA.
-- **Database**: MySQL (Relational Mapping).
-- **Frontend**: Responsive HTML5, CSS3 (Glassmorphism & Dark Theme), Vanilla JavaScript (Fetch API).
-- **Architecture**: Layered Architecture (Controller-Service-Repository-Entity).
+- **Backend**: Spring Boot 3.2.4 (REST API), Spring Security, Spring Data JPA.
+- **Reporting**: Apache POI (Excel Generation).
+- **Database**: MySQL 8.0 (Relational Mapping & Complex Joins).
+- **Frontend**: HTML5, CSS3 (Glassmorphism, Dark Theme), Vanilla JavaScript (Fetch API, Chart.js).
+- **Architecture**: Domain-Driven Design principles with Layered Architecture.
 
 ---
 
@@ -47,19 +65,19 @@
 ```text
 mountedge-e-commerce/
 ├── src/main/java/com/mountedge/ecommerce/
-│   ├── config/      # Security & JWT Configuration
-│   ├── controller/  # REST Endpoints
-│   ├── dto/         # Data Transfer Objects
-│   ├── entity/      # JPA Entities (Database Mapping)
-│   ├── repository/  # Data Access Layer
-│   ├── service/     # Business Logic Layer
-│   └── exception/   # Custom Global Exception Handling
+│   ├── config/      # Security, JWT & DB Initializers
+│   ├── controller/  # REST Endpoints (Admin, Product, Order, etc.)
+│   ├── dto/         # Data Transfer Objects for clean API contracts
+│   ├── entity/      # JPA Entities (Database Schema Mapping)
+│   ├── repository/  # Data Access Layer (Spring Data JPA)
+│   ├── service/     # Business Logic (Analytics, Reports, Orders)
+│   └── exception/   # Global Exception Handling
 ├── src/main/resources/
-│   ├── static/      # Frontend (HTML, CSS, JS)
-│   ├── schema.sql   # Database Initialization Script
-│   └── application.properties # Configurations
-├── assets/          # README media & assets
-└── pom.xml          # Maven Dependencies
+│   ├── static/      # Frontend Assets (HTML, CSS, JS, Images)
+│   ├── schema.sql   # Database Initialization
+│   └── application.properties # Server Configuration
+├── assets/          # Project Documentation Media
+└── pom.xml          # Maven Dependencies (Spring, POI, etc.)
 ```
 
 ---
@@ -86,19 +104,6 @@ mountedge-e-commerce/
 
 ---
 
-## 🔐 API Reference Highlights
-
-| Endpoint | Method | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `/api/auth/register` | `POST` | User Registration | Public |
-| `/api/auth/login` | `POST` | Get JWT Token | Public |
-| `/api/products` | `GET` | All Products | Authenticated |
-| `/api/cart` | `GET` | View User Cart | Authenticated |
-| `/api/orders` | `POST` | Place Order | Authenticated |
-| `/api/admin/inventory` | `PUT` | Update Stock | Admins Only |
-
----
-
 ## 🤝 Contribution
 Contributions are welcome! Please fork the repository and submit a pull request.
 
@@ -106,4 +111,5 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 This project is licensed under the MIT License.
 
 ---
-<p align="center">Made with ❤️ by Shlok Shinde</p>
+<p align="center">Built with 🏔️ by Shlok Shinde</p>
+
