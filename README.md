@@ -4,8 +4,6 @@
   <img src="src/main/resources/static/images/logo.png" alt="MountEdge Logo" width="200" />
 </p>
 
-![MountEdge Banner](assets/readme/banner.png)
-
 ## 🌟 Overview
 **MountEdge** is a premium, professional-grade e-commerce ecosystem built for modern retail. It features a high-performance **Java Spring Boot** backend and a stunning **Vanilla HTML/CSS/JS** frontend. The platform is architected with strict adherence to **OOPS principles** and **DBMS best practices**, offering a scalable, secure, and feature-rich experience for both customers and administrators.
 
